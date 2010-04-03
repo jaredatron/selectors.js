@@ -146,8 +146,23 @@ var S, Selector;
         selector = selector.parentSelector;
       }
       throw new Error('selector not found');
-    }
+    },
+
     
+
+    audit: function(prefix){
+      var list = {}, name, childSelector, childSelectorList, n;
+      prefix || (prefix = '');
+
+      for (name in this.childSelectors){
+        if (this.childSelectors[name] instanceof Selector){
+          childSelector     = new SelectorReference(this, name);
+          list[prefix+name] = childSelector.fullValue();
+          extend(list, childSelector.audit(prefix+name+' '));
+        }
+      };
+      return list;
+    },
 
   });
 
