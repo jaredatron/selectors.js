@@ -3,8 +3,11 @@ var S, Selector;
 (function(global, undefined) {
 
   // Constants
-  var VALID_SELECTOR_NAME  = /^[a-zA-Z0-9_-]+$/,
-      VALID_SELECTOR_QUERY = /^[a-zA-Z0-9\s_-]+$/,
+  var VALID_SELECTOR_NAME          = /^[a-z0-9_-]+$/i,
+      VALID_SELECTOR_VALUE         = /^[\sa-z0-9>&"#:=._\[\]\(\)]+$/i,
+      VALID_ALT_SELECTOR_VALUE     = /^[\sa-z0-9>"#:=._\[\]\(\)&]*$/i,
+      VALID_SELECTOR_QUERY         = /^[\sa-z0-9_-]+$/i,
+      NAME_REGEXP                  = /{name}/g,
       SELECTOR_DEF_VALUE_SHORTHAND = {
         '.'   :'.{name}',
         '#'   :'#{name}',
@@ -13,19 +16,35 @@ var S, Selector;
         '>.'  :'> .{name}',
         '>#'  :'> #{name}',
         '>[]' :'> [{name}]'
+      },
+      LEADING_UNDERSCORE           = /^_/,
+      TRAILING_UNDERSCORE          = /_$/,
+      SELECTOR_ALT_VALUE_SHORTHAND = {
+        '&.'   :'&.{name}',
+        '&#'   :'&#{name}',
+        '&[]'  :'&[{name}]'
       };
+
 
   // Helpers
   function extend(object, extension){
     for (var p in extension) object[p] = extension[p];
   }
-  
+
+  function Delegate(object){
+    if (object){
+      Delegate.prototype = object;
+      return new Delegate;
+    }
+  }
+
 
   /** Selector
     *   A simple object who's toString method stores the selector's value
     *   and who's properties/values are sub selectors
    **/
-  function Selector(value){
+  function Selector(value, super_selector){
+    var selector = super_selector ? new Delegate(super_selector) : this;
     value || (value = null);
     this.valueOf = function valueOf(){ return value; };
   }
@@ -38,19 +57,22 @@ var S, Selector;
     *   new SelectorReference(selectorReference, name);
     *     - return a refernce for the child selector of the given name of the given selector
    **/
-  function SelectorReference(selector, name){
+  function SelectorReference(selector, name, end){
     if (selector instanceof Selector){
       this.childSelectors = selector;
     }else{
       if (name){
         this.parentSelector = selector.clone();
-        if (name in selector.childSelectors)
+        if (name in selector.childSelectors){
           this.childSelectors = selector.childSelectors[name];
-        else
-          throw new TypeError('"'+selector+'" has no child selectors matching "'+name+'"');
+          this.name           = name;
+          this.end            = end || selector;
+        }else throw new TypeError('"'+selector+'" has no child selectors matching "'+name+'"');
       }else{
         this.parentSelector = selector.parentSelector;
         this.childSelectors = selector.childSelectors;
+        this.name           = selector.name;
+        this.end            = end || selector.parentSelector;
       }
     }
   }
@@ -98,25 +120,52 @@ var S, Selector;
     },
     // defines a named child selector and returns it
     def: function(name, value){
-      if (VALID_SELECTOR_NAME.test(name)); else
+      if (typeof name === "undefined" || VALID_SELECTOR_NAME.test(name)); else
         throw new TypeError('selector name "'+name+'" must match '+VALID_SELECTOR_NAME);
 
       if (!value) value = name;
       if (value in SELECTOR_DEF_VALUE_SHORTHAND) value = SELECTOR_DEF_VALUE_SHORTHAND[value];
-      value = value.replace(/{name}/g, name);
+      value = value.replace(NAME_REGEXP, name);
 
-      var child_selector = this.plus(value);
-      this.childSelectors[name] = child_selector.childSelectors;
-      return child_selector;
+
+      this.childSelectors[name] = new Selector(value);
+      return new SelectorReference(this, name);
     },
-    
+
+    alt: function(name, value){
+      if (this.parentSelector instanceof SelectorReference); else
+        throw new TypeError('you can only create alternate versions of selectors with a parent');
+
+      if (typeof name !== "string")
+        throw new TypeError('the first argument to alt must be a string');
+
+      if (!VALID_SELECTOR_NAME.test(name))
+        throw new TypeError('selector name "'+name+'" does not match '+VALID_SELECTOR_NAME);
+
+
+      if (VALID_ALT_SELECTOR_VALUE.test(value)); else
+        throw new TypeError('selector value "'+value+'" does not match '+VALID_ALT_SELECTOR_VALUE);
+
+      if (typeof value === 'undefined')
+        value = this.value()+'.'+name.replace(LEADING_UNDERSCORE, '').replace(TRAILING_UNDERSCORE, '');
+
+      if (value in SELECTOR_ALT_VALUE_SHORTHAND) value = SELECTOR_ALT_VALUE_SHORTHAND[value];
+      value = value.replace(NAME_REGEXP, name.replace(LEADING_UNDERSCORE, '').replace(TRAILING_UNDERSCORE, ''));
+
+      value = value.replace(/&/g, this.value());
+      if (LEADING_UNDERSCORE.test(name))  name = this.name+name;
+      if (TRAILING_UNDERSCORE.test(name)) name = name+this.name;
+
+      this.parentSelector.childSelectors[name] = new Selector(value, this.childSelectors);
+      return new SelectorReference(this.parentSelector, name, this);
+    },
+
     // turns this selector into an anonymous selector
     remove: function(){
       if (this.parentSelector){
-        for (var name in this.parentSelector.childSelectors)
-          if (this.parentSelector.childSelectors[name] === this.childSelectors)
-            delete this.parentSelector.childSelectors[name];
+        delete this.parentSelector.childSelectors[this.name];
         delete this.parentSelector;
+        delete this.name;
       }
       return this;
     },
@@ -125,9 +174,7 @@ var S, Selector;
     // searches for and returns the shallowest matching child selector
     down: function(name){
       if (name in this.childSelectors); else throw new Error('selector not found');
-      var child = new SelectorReference(this, name);
-      child.end = this;
-      return child;
+      return new SelectorReference(this, name);
     },
     // searches for and returns the deepest matching parent selector
     up: function(name){
@@ -138,16 +185,17 @@ var S, Selector;
           selector = selector.parentSelector;
         }
       }
+      // TODO refactor this now that SelectorRefernces know their name
       while(selector){
         if (selector.parentSelector)
           for (n in selector.parentSelector.childSelectors)
-            if (selector.parentSelector.childSelectors[n] === selector.childSelectors) 
+            if (selector.parentSelector.childSelectors[n] === selector.childSelectors)
               if (name === n) return new SelectorReference(selector.parentSelector, name);
         selector = selector.parentSelector;
       }
       throw new Error('selector not found');
     },
-    
+
 
 
     audit: function(prefix){
@@ -166,7 +214,7 @@ var S, Selector;
 
   });
 
-  
+
   function S(name){ return S.down(name); }
   extend(S, new AnonymousSelectorReference);
   S.def('html').def('body');

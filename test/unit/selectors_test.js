@@ -3,31 +3,33 @@
   module("Selector");
 
   test("Selector", function() {
-    expect(typeof Selector).toEqual('function');
-
+    expect(Selector    ).toBeAnInstanceOf(Function);
     expect(new Selector).toBeAnInstanceOf(Selector);
-    expect(Selector()).toBeAnInstanceOf(Selector);
+    expect(Selector()  ).toBeAnInstanceOf(Selector);
 
-    // ROOT SELECTOR
-    expect(Selector().value()).toEqual(null);
-    expect(Selector().toString()).toEqual("[root selector]");
-    expect(!('parentSelector' in (Selector))).toBe(true, "selector should not have a parentSelector property");
-
-    expect(Selector("> .head").value()).toEqual("> .head");
+    expect(Selector())
+      .toNotHaveProperty('parentSelector')
+      .toNotHaveProperty('name')
+      .toNotHaveProperty('end');
+    expect(Selector().value()             ).toEqual(null);
+    expect(Selector().toString()          ).toEqual("[root selector]");
+    expect(Selector("> .head").value()    ).toEqual("> .head");
     expect(Selector("> .head").fullValue()).toEqual("> .head");
   });
 
   test('selector.plus', function(){
     expect(function(){ Selector().plus(); }).toThrowA(TypeError);
 
-    var head_selector = new Selector("> .head");
-    var head_logo_selector = head_selector.plus('> logo');
-    expect(head_logo_selector.value()).toEqual("> logo");
-    expect(head_logo_selector.fullValue()).toEqual("> .head > logo");
+    var header = new Selector("> .header"),
+        logo   = header.plus('> logo'),
+        image  = logo.plus('> img');
 
-    var head_logo_image_selector = head_logo_selector.plus('> img');
-    expect(head_logo_image_selector.value()).toEqual("> img");
-    expect(head_logo_image_selector.fullValue()).toEqual("> .head > logo > img");
+    expect(logo.value()     ).toEqual("> logo");
+    expect(logo.fullValue() ).toEqual("> .header > logo");
+    expect(logo.end         ).toBe(header);
+    expect(image.value()    ).toEqual("> img");
+    expect(image.fullValue()).toEqual("> .header > logo > img");
+    expect(image.end        ).toBe(logo);
   });
 
   test('selector.def', function(){
@@ -62,6 +64,32 @@
       expect(Selector().def("name", shortcut[0]).value()).toEqual(shortcut[1]);
     });
 
+  });
+
+  test('selector.alt', function(){
+    var dog = Selector('html').def('dog','>.');
+
+    expect(function(){ Selector().alt(); }).toThrow('you can only create alternate versions of selectors with a parent');
+    expect(function(){ dog.alt();        }).toThrow('the first argument to alt must be a string');
+
+    var n, BAD_CHARACTERS = new String('>.#^!@#$%*()');
+    for (n in BAD_CHARACTERS)
+      expect(Function('Selector().def("div").alt("'+BAD_CHARACTERS[n]+'");'))
+        .toThrow('selector name "'+BAD_CHARACTERS[n]+'" does not match /^[a-z0-9_-]+$/i');
+
+    expect( dog.alt('red_').toString() ).toEqual('html > .dog.red');
+    expect( dog.alt('red_').end ).toBe(dog);
+
+    [['&.',      '> .dog.red' ],
+     ['&#',      '> .dog#red' ],
+     ['&[]',     '> .dog[red]']].forEach(function(data){
+      expect( dog.alt('red_', data[0]).value() ).toEqual(data[1]);
+    });
+
+    expect( Selector().def('dog','>.').alt('red'  ).name ).toEqual('red');
+    expect( Selector().def('dog','>.').alt('red_' ).name ).toEqual('red_dog');
+    expect( Selector().def('dog','>.').alt('_red_').name ).toEqual('dog_red_dog');
+    expect( Selector().def('dog','>.').alt('_red' ).name ).toEqual('dog_red');
   });
 
   test('selector.down, selector.up', function(){
@@ -113,6 +141,8 @@
     expect(clone.value()        ).toEqual(content.value());
     expect(clone.fullValue()    ).toEqual(content.fullValue());
     expect(clone.childSelectors ).toBe(content.childSelectors);
+    expect(clone.parentSelector ).toBe(content.parentSelector);
+    expect(clone.name           ).toEqual(content.name);
   });
 
   test("selector.audit()", function() {
