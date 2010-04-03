@@ -251,9 +251,9 @@ var S, Selector;
   });
 
 
-  function S(name){ return name ? S.rootSelector.down(name) : S.rootSelector; }
-  S.rootSelector = new AnonymousSelectorReference;
-  S().def('html').def('body');
+  function S(name){ return S.down(name); }
+  extend(S, new AnonymousSelectorReference);
+  S.def('html').def('body');
 
   global.S = S;
   global.Selector = AnonymousSelectorReference;
