@@ -4,7 +4,16 @@ var S, Selector;
 
   // Constants
   var VALID_SELECTOR_NAME  = /^[a-zA-Z0-9_-]+$/,
-      VALID_SELECTOR_QUERY = /^[a-zA-Z0-9\s_-]+$/;
+      VALID_SELECTOR_QUERY = /^[a-zA-Z0-9\s_-]+$/,
+      SELECTOR_DEF_VALUE_SHORTHAND = {
+        '.'   :'.{name}',
+        '#'   :'#{name}',
+        '[]'  :'[{name}]',
+        '>'   :'> {name}',
+        '>.'  :'> .{name}',
+        '>#'  :'> #{name}',
+        '>[]' :'> [{name}]'
+      };
 
   // Helpers
   function extend(object, extension){
@@ -92,7 +101,9 @@ var S, Selector;
       if (VALID_SELECTOR_NAME.test(name)); else
         throw new TypeError('selector name "'+name+'" must match '+VALID_SELECTOR_NAME);
 
-      value || (value = name);
+      if (!value) value = name;
+      if (value in SELECTOR_DEF_VALUE_SHORTHAND) value = SELECTOR_DEF_VALUE_SHORTHAND[value];
+      value = value.replace(/{name}/g, name);
 
       var child_selector = this.plus(value);
       this.childSelectors[name] = child_selector.childSelectors;

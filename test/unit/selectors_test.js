@@ -65,6 +65,19 @@
     error = false;
     try{ body.down('content') }catch(e){ error = e; }
     ok(error.message === 'selector not found', 'remove should remove the selector from its parent selector');
+
+    [ [''   , 'name'    ],
+      ['.'  , '.name'   ],
+      ['#'  , '#name'   ],
+      ['[]' , '[name]'  ],
+      ['>'  , '> name'  ],
+      ['>.' , '> .name' ],
+      ['>#' , '> #name' ],
+      ['>[]', '> [name]']
+    ].forEach(function(shortcut){
+      equals(Selector().def("name", shortcut[0]).value(), shortcut[1]);
+    });
+
   });
 
 })();
