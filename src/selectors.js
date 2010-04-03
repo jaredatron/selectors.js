@@ -8,6 +8,7 @@ var S, Selector;
       VALID_ALT_SELECTOR_VALUE     = /^[\sa-z0-9>"#:=._\[\]\(\)&]*$/i,
       VALID_SELECTOR_QUERY         = /^[\sa-z0-9_-]+$/i,
       NAME_REGEXP                  = /{name}/g,
+      SURROUNDING_WHITE_SPACE      = /(^\s*|\s*$)/g,
       SELECTOR_DEF_VALUE_SHORTHAND = {
         '.'   :'.{name}',
         '#'   :'#{name}',
@@ -171,11 +172,46 @@ var S, Selector;
     },
 
 
-    // searches for and returns the shallowest matching child selector
-    down: function(name){
-      if (name in this.childSelectors); else throw new Error('selector not found');
-      return new SelectorReference(this, name);
-    },
+    down: (function() {
+
+      function down(query){
+        var names = query.replace(SURROUNDING_WHITE_SPACE,'').split(/\s+/), selectors = [this];
+        while(names.length) selectors = findAllChildrenNamed(names.shift(), selectors, names.length === 0);
+        if (selectors[0]){
+          selectors[0].end = this;
+          return selectors[0];
+        }else{
+          throw new Error('selector not found');
+        }
+      }
+
+
+      function findAllChildrenNamed(name, selectors, return_first_match){
+        var n, parent_selector, child_selector, child_selectors = [], matches = [];
+
+        while(selectors.length){
+          parent_selector = selectors.shift();
+          for (n in parent_selector.childSelectors){
+            child_selector = new SelectorReference(parent_selector, n);
+            child_selectors.push(child_selector);
+            if (name === n){
+              if (return_first_match) return [child_selector];
+              matches.push(child_selector);
+            }
+          }
+        }
+
+        if (child_selectors.length)
+          matches = matches.concat( findAllChildrenNamed(name, child_selectors) );
+
+        return matches;
+      }
+
+      return down;
+
+    })(),
+
+
     // searches for and returns the deepest matching parent selector
     up: function(name){
       var n, selector = this.parentSelector;

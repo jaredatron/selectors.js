@@ -98,35 +98,57 @@
     selector
       .def('html')
         .def('body')
-          .def('content', '>.').end
+          .def('header', '>.')
+            .def('content', '>.')
+            .end
+          .end
+          .def('content', '>.')
+            .def('profile', '>.')
+              .def('content', '>.')
+              .end
+            .end
+          .end
         .end
       .end
     ;
 
-    expect(function(){ selector.down(); }).toThrow('selector not found');
+    expect(function(){ selector.down();       }).toThrow('query is undefined');
+    expect(function(){ selector.down('nope'); }).toThrow('selector not found');
 
-    expect( selector.down('html').value()       ).toEqual('html');
-    expect( selector.down('html').fullValue()   ).toEqual('html');
-    expect( selector.down('html').toString()    ).toEqual('html');
+    expect(selector.down('html').value()       ).toEqual('html');
+    expect(selector.down('html').fullValue()   ).toEqual('html');
+    expect(selector.down('html').toString()    ).toEqual('html');
 
-    expect( selector.down('html').down('body').value()     ).toEqual('body');
-    expect( selector.down('html').down('body').fullValue() ).toEqual('html body');
-    expect( selector.down('html').down('body').toString()  ).toEqual('html body');
+    expect(selector.down('html').down('body').value()     ).toEqual('body');
+    expect(selector.down('html').down('body').fullValue() ).toEqual('html body');
+    expect(selector.down('html').down('body').toString()  ).toEqual('html body');
 
-    expect( selector.down('html').down('body').down('content').value()     ).toEqual('> .content');
-    expect( selector.down('html').down('body').down('content').fullValue() ).toEqual('html body > .content');
-    expect( selector.down('html').down('body').down('content').toString()  ).toEqual('html body > .content');
+    expect(selector.down('html').down('body').down('content').value()     ).toEqual('> .content');
+    expect(selector.down('html').down('body').down('content').fullValue() ).toEqual('html body > .content');
+    expect(selector.down('html').down('body').down('content').toString()  ).toEqual('html body > .content');
 
-    expect( selector.down('html')                               ).toNotBe(selector.down('html'));
-    expect( selector.down('html').childSelectors                ).toBe(selector.down('html').childSelectors);
-    expect( selector.down('html').end                           ).toBe(selector);
-    expect( selector.down('html').parentSelector                ).toNotBe(selector);
-    expect( selector.down('html').parentSelector.childSelectors ).toBe(selector.childSelectors);
+    expect(selector.down('html')                               ).toNotBe(selector.down('html'));
+    expect(selector.down('html').childSelectors                ).toBe(selector.down('html').childSelectors);
+    expect(selector.down('html').end                           ).toBe(selector);
+    expect(selector.down('html').parentSelector                ).toNotBe(selector);
+    expect(selector.down('html').parentSelector.childSelectors ).toBe(selector.childSelectors);
 
     var content = selector.down('html').down('body').down('content');
     expect(content.up('body').toString()).toEqual('html body');
     expect(content.up('html').toString()).toEqual('html');
     expect(content.up()      .toString()).toEqual('[root selector]');
+
+    expect(selector.down('content').toString()                 ).toEqual('html body > .content');
+    expect(selector.down('body content').toString()            ).toEqual('html body > .content');
+    expect(selector.down('header content').toString()          ).toEqual('html body > .header > .content');
+    expect(selector.down('profile content').toString()         ).toEqual('html body > .content > .profile > .content');
+    expect(selector.down('content content').toString()         ).toEqual('html body > .content > .profile > .content');
+    expect(selector.down('body profile content').toString()    ).toEqual('html body > .content > .profile > .content');
+    expect(selector.down(' body  ').down('content').toString() ).toEqual('html body > .content');
+    expect(selector.down(' header').down('content').toString() ).toEqual('html body > .header > .content');
+    expect(selector.down('profile').down('content').toString() ).toEqual('html body > .content > .profile > .content');
+
+    expect(function(){ selector.down('header profile'); }).toThrow('selector not found');
   });
 
   test('selector.remove', function(){
