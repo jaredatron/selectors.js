@@ -80,4 +80,22 @@
 
   });
 
+  test("selector.audit()", function() {
+    var selector = Selector()
+    .def('html')
+      .def('body')
+        .def('header', '>.').end
+        .def('content', '>.').end
+        .def('footer', '>.').end
+      .end
+    .end;
+
+    var audit = selector.audit();
+    equals(audit["html"],              "html");
+    equals(audit["html body"],         "html body");
+    equals(audit["html body header"],  "html body > .header");
+    equals(audit["html body content"], "html body > .content");
+    equals(audit["html body footer"],  "html body > .footer");
+  });
+
 })();
