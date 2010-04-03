@@ -1,70 +1,54 @@
 ;(function() {
-
+  var undefined;
   module("Selector");
 
   test("Selector", function() {
-    ok(typeof Selector === 'function', "Selector should be a function");
-  });
+    expect(typeof Selector).toEqual('function');
 
-  test("new Selector", function() {
-    var error;
-
-    ok(new Selector instanceof Selector, "Selector should be an instance of Selector");
-    ok(Selector() instanceof Selector, "Selector should be an instance of Selector");
+    expect(new Selector).toBeAnInstanceOf(Selector);
+    expect(Selector()).toBeAnInstanceOf(Selector);
 
     // ROOT SELECTOR
-    ok(Selector().value() === null, "new Selector().value() should === null");
-    ok(Selector().toString() === "[root selector]", 'selector.toString() should === "[root selector]"');
-    ok(!('parentSelector' in (Selector)), "selector should not have a parentSelector property");
+    expect(Selector().value()).toEqual(null);
+    expect(Selector().toString()).toEqual("[root selector]");
+    expect(!('parentSelector' in (Selector))).toBe(true, "selector should not have a parentSelector property");
 
+    expect(Selector("> .head").value()).toEqual("> .head");
+    expect(Selector("> .head").fullValue()).toEqual("> .head");
+  });
 
-    error = false;
-    try{ Selector().plus(); }catch(e){ error = e; }
-    ok(error instanceof TypeError, 'when plus passed a non-string it throws an error');
+  test('selector.plus', function(){
+    expect(function(){ Selector().plus(); }).toThrowA(TypeError);
 
     var head_selector = new Selector("> .head");
-    equals(head_selector.value(), "> .head", 'selector.value() should return the value given');
-    equals(head_selector.fullValue(), "> .head", 'selector.fullValue() should return the value given');
-
     var head_logo_selector = head_selector.plus('> logo');
-    equals(head_logo_selector.value(), "> logo");
-    equals(head_logo_selector.fullValue(), "> .head > logo");
+    expect(head_logo_selector.value()).toEqual("> logo");
+    expect(head_logo_selector.fullValue()).toEqual("> .head > logo");
 
     var head_logo_image_selector = head_logo_selector.plus('> img');
-    equals(head_logo_image_selector.value(), "> img");
-    equals(head_logo_image_selector.fullValue(), "> .head > logo > img");
+    expect(head_logo_image_selector.value()).toEqual("> img");
+    expect(head_logo_image_selector.fullValue()).toEqual("> .head > logo > img");
+  });
 
-    var html = Selector('html');
-    var body = html.def('body', 'body');
-    var content = body.def('content', '> #content');
-    ok(body.end === html, 'selector.def(name, value).end should === selector');
-    ok(content.end.end === html, 'selector.def(name, value).def(name, value).end.end should === selector');
-    ok(body.parentSelector !== html, 'selector.def(name, value).end should === selector');
-    ok(content.parentSelector.parentSelector !== html, 'selector.def(name, value).def(name, value).end.end should === selector');
+  test('selector.def', function(){
+    var html    = Selector('html'),
+        body    = html.def('body', 'body'),
+        content = body.def('content', '> #content');
 
-    equals(body.fullValue(), 'html body');
-    equals(content.fullValue(), 'html body > #content');
+    expect(content.end)                           .toBe(body);
+    expect(content.parentSelector)                .toNotBe(body);
+    expect(content.parentSelector.childSelectors) .toBe(body.childSelectors);
+    expect(body.end)                              .toBe(html);
+    expect(body.parentSelector)                   .toNotBe(html);
+    expect(body.parentSelector.childSelectors)    .toBe(html.childSelectors);
+    expect(html.end)                              .toBe(undefined);
 
-    var content_clone = content.clone();
-    ok(content !== content_clone, 'clone should not return the same object');
-    equals(content.value(), content_clone.value());
-    equals(content.fullValue(), content_clone.fullValue());
-
-    equals(html.down('body').value(), body.value());
-    equals(html.down('body').fullValue(), 'html body');
-    equals(html.down('body').down('content').value(), content.value());
-    equals(html.down('body').down('content').fullValue(), 'html body > #content');
-
-    ok(html.down('body') !== html.down('body'), 'html.down("body") should always returns a new reference object');
-    ok(html.down('body').parentSelector !== html, 'html.down("body").parentSelector should not equal html');
-
-    equals(content.up().value(), html.value());
-    equals(content.up('body').value(), body.value());
-
-    content.remove();
-    error = false;
-    try{ body.down('content') }catch(e){ error = e; }
-    ok(error.message === 'selector not found', 'remove should remove the selector from its parent selector');
+    expect(content.value())    .toEqual('> #content');
+    expect(content.fullValue()).toEqual('html body > #content');
+    expect(content.toString()) .toEqual('html body > #content');
+    expect(body.value())       .toEqual('body');
+    expect(body.fullValue())   .toEqual('html body');
+    expect(body.toString())    .toEqual('html body');
 
     [ [''   , 'name'    ],
       ['.'  , '.name'   ],
@@ -75,9 +59,60 @@
       ['>#' , '> #name' ],
       ['>[]', '> [name]']
     ].forEach(function(shortcut){
-      equals(Selector().def("name", shortcut[0]).value(), shortcut[1]);
+      expect(Selector().def("name", shortcut[0]).value()).toEqual(shortcut[1]);
     });
 
+  });
+
+  test('selector.down, selector.up', function(){
+    var selector = Selector();
+
+    selector
+      .def('html')
+        .def('body')
+          .def('content', '>.').end
+        .end
+      .end
+    ;
+
+    expect(function(){ selector.down(); }).toThrow('selector not found');
+
+    expect( selector.down('html').value()       ).toEqual('html');
+    expect( selector.down('html').fullValue()   ).toEqual('html');
+    expect( selector.down('html').toString()    ).toEqual('html');
+
+    expect( selector.down('html').down('body').value()     ).toEqual('body');
+    expect( selector.down('html').down('body').fullValue() ).toEqual('html body');
+    expect( selector.down('html').down('body').toString()  ).toEqual('html body');
+
+    expect( selector.down('html').down('body').down('content').value()     ).toEqual('> .content');
+    expect( selector.down('html').down('body').down('content').fullValue() ).toEqual('html body > .content');
+    expect( selector.down('html').down('body').down('content').toString()  ).toEqual('html body > .content');
+
+    expect( selector.down('html')                               ).toNotBe(selector.down('html'));
+    expect( selector.down('html').childSelectors                ).toBe(selector.down('html').childSelectors);
+    expect( selector.down('html').end                           ).toBe(selector);
+    expect( selector.down('html').parentSelector                ).toNotBe(selector);
+    expect( selector.down('html').parentSelector.childSelectors ).toBe(selector.childSelectors);
+
+    var content = selector.down('html').down('body').down('content');
+    expect(content.up('body').toString()).toEqual('html body');
+    expect(content.up('html').toString()).toEqual('html');
+    expect(content.up()      .toString()).toEqual('[root selector]');
+  });
+
+  test('selector.remove', function(){
+    var p = Selector('p').def('img').end;
+    p.down('img').remove();
+    expect(function(){ p.down('img'); }).toThrow('selector not found');
+  });
+
+  test('selector.clone', function(){
+    var content = Selector('#content'), clone = content.clone();
+    expect(content !== clone    ).toBe(true, 'clone should not return the same object');
+    expect(clone.value()        ).toEqual(content.value());
+    expect(clone.fullValue()    ).toEqual(content.fullValue());
+    expect(clone.childSelectors ).toBe(content.childSelectors);
   });
 
   test("selector.audit()", function() {
@@ -91,11 +126,15 @@
     .end;
 
     var audit = selector.audit();
-    equals(audit["html"],              "html");
-    equals(audit["html body"],         "html body");
-    equals(audit["html body header"],  "html body > .header");
-    equals(audit["html body content"], "html body > .content");
-    equals(audit["html body footer"],  "html body > .footer");
+    expect( audit["html"]              ).toEqual("html");
+    expect( audit["html body"]         ).toEqual("html body");
+    expect( audit["html body header"]  ).toEqual("html body > .header");
+    expect( audit["html body content"] ).toEqual("html body > .content");
+    expect( audit["html body footer"]  ).toEqual("html body > .footer");
+  });
+
+  test('S', function(){
+    expect(S('html').toString()).toEqual('html');
   });
 
 })();
