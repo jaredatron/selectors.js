@@ -147,8 +147,8 @@ var S, Selector;
       }
       throw new Error('selector not found');
     },
-
     
+
 
     audit: function(prefix){
       var list = {}, name, childSelector, childSelectorList, n;
@@ -167,17 +167,11 @@ var S, Selector;
   });
 
   
-  
-  
-  var ROOT_SELECTOR = new AnonymousSelectorReference;
+  function S(name){ return S.down(name); }
+  extend(S, new AnonymousSelectorReference);
+  S.def('html').def('body');
 
-  ROOT_SELECTOR
-    .def('html')
-      .def('body').end
-    .end
-  ;
-
-  global.S = function(name){ return ROOT_SELECTOR.down(name); };
+  global.S = S;
   global.Selector = AnonymousSelectorReference;
 
 })(this);
