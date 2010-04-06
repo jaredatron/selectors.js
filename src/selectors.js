@@ -69,7 +69,7 @@ var S, Selector;
           this.childSelectors = selector.childSelectors[name];
           this.name           = name;
           this.end            = end || selector;
-        }else throw new TypeError('"'+selector+'" has no child selectors matching "'+name+'"');
+        }else throw new TypeError("'"+selector+"' has no child selectors matching '"+name+"'");
       }else{
         this.parentSelector = selector.parentSelector;
         this.childSelectors = selector.childSelectors;
@@ -123,7 +123,7 @@ var S, Selector;
     // defines a named child selector and returns it
     def: function(name, value){
       if (typeof name === "undefined" || VALID_SELECTOR_NAME.test(name)); else
-        throw new TypeError('selector name "'+name+'" must match '+VALID_SELECTOR_NAME);
+        throw new TypeError("selector name '"+name+"' must match "+VALID_SELECTOR_NAME);
 
       if (!value) value = name;
       if (value in SELECTOR_DEF_VALUE_SHORTHAND) value = SELECTOR_DEF_VALUE_SHORTHAND[value];
@@ -142,11 +142,11 @@ var S, Selector;
         throw new TypeError('the first argument to alt must be a string');
 
       if (!VALID_SELECTOR_NAME.test(name))
-        throw new TypeError('selector name "'+name+'" does not match '+VALID_SELECTOR_NAME);
+        throw new TypeError("selector name '"+name+"' does not match "+VALID_SELECTOR_NAME);
 
 
       if (VALID_ALT_SELECTOR_VALUE.test(value)); else
-        throw new TypeError('selector value "'+value+'" does not match '+VALID_ALT_SELECTOR_VALUE);
+        throw new TypeError("selector value '"+value+"' does not match "+VALID_ALT_SELECTOR_VALUE);
 
       if (typeof value === 'undefined')
         value = this.value()+'.'+name.replace(LEADING_UNDERSCORE, '').replace(TRAILING_UNDERSCORE, '');
