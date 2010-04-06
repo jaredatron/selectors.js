@@ -47,7 +47,8 @@ var S, Selector;
   function Selector(value, super_selector){
     var selector = super_selector ? new Delegate(super_selector) : this;
     value || (value = null);
-    this.valueOf = function valueOf(){ return value; };
+    selector.valueOf = function valueOf(){ return value; };
+    return selector;
   }
 
   /** SelectorReference
