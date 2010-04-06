@@ -239,7 +239,9 @@
   });
 
   test("selector.audit()", function() {
-    var selector = Selector()
+    var selectors, audit;
+
+    selectors = Selector()
     .def('html')
       .def('body')
         .def('header', '>.').end
@@ -248,12 +250,25 @@
       .end
     .end;
 
-    var audit = selector.audit();
+    var audit = selectors.audit();
     expect( audit["html"]              ).toEqual("html");
     expect( audit["html body"]         ).toEqual("html body");
     expect( audit["html body header"]  ).toEqual("html body > .header");
     expect( audit["html body content"] ).toEqual("html body > .content");
     expect( audit["html body footer"]  ).toEqual("html body > .footer");
+
+    // infinate recursion tests
+    selectors = Selector()
+    .def('parent')
+      .def('child').end
+    .end;
+    // manually creating an infinate loop
+    selectors.down('child').childSelectors.parent = selectors.down('parent').childSelectors;
+
+    audit = selectors.audit();
+    expect( audit["parent"]              ).toEqual("parent");
+    expect( audit["parent child"]        ).toEqual("parent child");
+    expect( audit["parent child parent"] ).toEqual("parent child parent (infinate loop detected)");
   });
 
   test('S', function(){

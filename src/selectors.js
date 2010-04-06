@@ -234,22 +234,47 @@ var S, Selector;
     },
 
 
-
-    audit: function(prefix){
-      var list = {}, name, childSelector, childSelectorList, n;
+    audit: function(prefix, selectors){
+      var list = new SelectorsList, n, name, child_selector;
+      selectors || (selectors = [this.childSelectors]);
       prefix || (prefix = '');
 
       for (name in this.childSelectors){
         if (this.childSelectors[name] instanceof Selector){
-          childSelector     = new SelectorReference(this, name);
-          list[prefix+name] = childSelector.fullValue();
-          extend(list, childSelector.audit(prefix+name+' '));
+          child_selector = new SelectorReference(this, name);
+          if (selectors.indexOf(child_selector.childSelectors) === -1){
+            selectors.push(child_selector.childSelectors);
+            list[prefix+name] = child_selector.toString();
+            extend(list, child_selector.audit(prefix+name+' ', selectors));
+          }else{
+            list[prefix+name] = child_selector.toString()+' (infinate loop detected)';
+          }
         }
       };
+
       return list;
-    },
+    }
 
   });
+
+  function SelectorsList(){}
+  SelectorsList.prototype.toString = function(){
+    var string = '', length = 0, name, value;
+
+    for (name in this)
+      if (name !== 'toString')
+        length = name.length > length ? name.length : length;
+
+    for (name in this){
+      value = this[name];
+      if (name !== 'toString'){
+        while(name.length < length) name += ' ';
+        string += name+'     '+value+"\n";
+      }
+    };
+
+    return string;
+  };
 
 
   function S(query){ return S.down(query); }
