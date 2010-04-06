@@ -175,9 +175,11 @@
 
     // UP
     var content = selector.down('content');
+    expect(content.up()).toBeTheSameSelectorAs(content.parentSelector);
+    expect(content.up(      ).toString()).toEqual('html body');
     expect(content.up('body').toString()).toEqual('html body');
     expect(content.up('html').toString()).toEqual('html');
-    expect(content.up(      ).toString()).toEqual('[root selector]');
+
 
     // infinate recursion tests
     var loop = Selector('#loop');

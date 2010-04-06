@@ -67,16 +67,35 @@
     expect( S('body').get().toSelector().up('html') ).toBeTheSameSelectorAs(S('html'));
   });
 
-  test('jQuery().to, jQuery().to', function(){
+  test('jQuery().up, jQuery().down', function(){
+    // Up
+    expect( S('profile content').get().up()                       ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile') );
+    expect( S('profile content').get().up('content')              ).toReferenceTheSameHtmlElementsAs( $('html body > .content')            );
+
+    // Down with additional selector
+    expect( S('profile content').get().up('body', 'a[href]')      ).toReferenceTheSameHtmlElementsAs( $('html body a[href]') );
+
+    // Down
+    expect( S('html').get().down('content')                       ).toReferenceTheSameHtmlElementsAs( $('html body > .content')                       );
+    expect( S('html').get().down('profile')                       ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile')            );
+    expect( S('html').get().down('profile content')               ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile > .content') );
+    expect( S('html').get().down('profile').down('content')       ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile > .content') );
+
+    // Down with additional selector
+    expect( S('html').get().down('profile content', '> img')      ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile > .content > img') );
+
+    expect( S('profile content').get().up()                       ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile') );
+    expect( S('profile content').get().up().up()                  ).toReferenceTheSameHtmlElementsAs( $('html body > .content')            );
+    expect( S('profile content').get().up().up().up()             ).toReferenceTheSameHtmlElementsAs( $('body')                            );
+    expect( S('profile content').get().up().up().up().up()        ).toReferenceTheSameHtmlElementsAs( $('html')                            );
+    expect( S('profile content').get().up().up().up().up().up()   ).toReferenceTheSameHtmlElementsAs( $()                                  );
+
 
   });
 
-  test('jQuery().up, jQuery().down', function(){
-    var html = S('html').get();
-    expect( html.down('content')           ).toReferenceTheSameHtmlElementsAs( $('html body > .content')                       );
-    expect( html.down('profile')           ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile')            );
-    expect( html.down('profile content')   ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile > .content') );
-    expect( html.down('profile').down('content')   ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile > .content') );
+
+  test('jQuery().to, jQuery().to', function(){
+
   });
 
 

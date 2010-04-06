@@ -16,27 +16,28 @@
       return this.toSelector().from(query);
     },
     up: function up(query, plus){
-      return this.find(this.from(query)+(plus||""));
+      var selector = this.toSelector().up(query);
+      if (plus) selector = selector.plus(plus);
+
+      var collection = this.parents(selector.toString());
+      collection.toSelector = function toSelector(){ return selector; };
+      return collection;
     },
     down: function down(query, plus){
-      // console.log('down', this, arguments, this.toSelector());
       var parent_selector = this.toSelector(),
-          selector = parent_selector.down(query);
+          selector        = parent_selector.down(query);
       if (plus) selector = selector.plus(plus);
 
       var collection = this.find(selector.from(parent_selector));
       collection.toSelector = function toSelector(){ return selector; };
-      console.assert( collection.selector === selector.toString() );
       return collection;
     }
-    // plus ??
   });
 
   $.extend(Selector.prototype, {
     get: function(){
       var selector = this, collection = $(this.toString());
       collection.toSelector = function toSelector(){ return selector; };
-      console.assert( collection.selector === selector.toString() );
       return collection;
     },
     bind: function(types, data, handler){

@@ -1,5 +1,4 @@
 ;(function() {
-  
   QUnit.jsDump.parsers.selector = function(selector){
     return selector.parentSelector ? '[Selector:'+selector+']' : selector.toString();
   };

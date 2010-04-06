@@ -243,17 +243,12 @@ var S, Selector;
 
     })(),
     // searches for and returns the deepest matching parent selector
-    up: function(name){
+    up: function(query){
       var n, selector = this.parentSelector;
-      if (typeof name === 'undefined'){
-        while(selector){
-          if (!selector.parentSelector) return new SelectorReference(selector);
-          selector = selector.parentSelector;
-        }
-      }
+      if (typeof query === 'undefined') return new SelectorReference(selector);
       while(selector){
-        if (selector.parentSelector && selector.parentSelector.childSelectors[name] === selector.childSelectors)
-          return new SelectorReference(selector.parentSelector, name);
+        if (selector.parentSelector && selector.parentSelector.childSelectors[query] === selector.childSelectors)
+          return new SelectorReference(selector.parentSelector, query);
         selector = selector.parentSelector;
       }
       throw new Error('selector not found');
@@ -272,6 +267,7 @@ var S, Selector;
     //
     from: function(query){
       if (this.value() === '') throw new Error('from cannot be called on a root selector');
+      if (typeof query === 'undefined') return this.parentSelectors().pop().to(this);
       return (query instanceof SelectorReference) ? query.to(this) : this.up(query).to(this);
     },
     //
