@@ -1,5 +1,29 @@
 ;(function() {
   var undefined;
+
+  QUnit.jsDump.parsers.selector = function(selector){
+    return selector.parentSelector ? '[Selector:'+selector+']' : selector.toString();
+  };
+
+  function typeOf( obj ){
+    return (obj instanceof Selector) ? 'selector' : typeOf.$super.apply(this, arguments);
+  }
+  typeOf.$super = QUnit.jsDump.typeOf; QUnit.jsDump.typeOf = typeOf;
+
+  expect.prototype.toBeTheSameSelectorAs = function(expected, message){
+    return this.each(function(actual){
+      strictEqual(actual.childSelectors, expected.childSelectors,
+        "expecting '"+actual+"' to reference the same selector as '"+expected+"'");
+    });
+  };
+
+  expect.prototype.toNotBeTheSameSelectorAs = function(expected, message){
+    return this.each(function(actual){
+      notStrictEqual(actual.childSelectors, expected.childSelectors,
+        "expecting '"+actual+"' to not reference the same selector as '"+expected+"'");
+    });
+  };
+
   module("Selector");
 
   test("Selector", function() {
@@ -37,13 +61,13 @@
         body    = html.def('body', 'body'),
         content = body.def('content', '> #content');
 
-    expect(content.end)                           .toBe(body);
-    expect(content.parentSelector)                .toNotBe(body);
-    expect(content.parentSelector.childSelectors) .toBe(body.childSelectors);
-    expect(body.end)                              .toBe(html);
-    expect(body.parentSelector)                   .toNotBe(html);
-    expect(body.parentSelector.childSelectors)    .toBe(html.childSelectors);
-    expect(html.end)                              .toBe(undefined);
+    expect(content.end)            .toBe(body);
+    expect(content.parentSelector) .toNotBe(body);
+    expect(content.parentSelector) .toBeTheSameSelectorAs(body);
+    expect(body.end)               .toBe(html);
+    expect(body.parentSelector)    .toNotBe(html);
+    expect(body.parentSelector)    .toBeTheSameSelectorAs(html);
+    expect(html.end)               .toBe(undefined);
 
     expect(content.value())    .toEqual('> #content');
     expect(content.fullValue()).toEqual('html body > #content');
@@ -75,7 +99,7 @@
     var n, BAD_CHARACTERS = new String('>.#^!@#$%*()');
     for (n in BAD_CHARACTERS)
       expect(Function('Selector().def("div").alt("'+BAD_CHARACTERS[n]+'");'))
-        .toThrow('selector name "'+BAD_CHARACTERS[n]+'" does not match /^[a-z0-9_-]+$/i');
+        .toThrow("selector name '"+BAD_CHARACTERS[n]+"' does not match /^[a-z0-9_-]+$/i");
 
     expect( dog.alt('red_').toString() ).toEqual('html > .dog.red');
     expect( dog.alt('red_').end ).toBe(dog);
@@ -90,6 +114,33 @@
     expect( Selector().def('dog','>.').alt('red_' ).name ).toEqual('red_dog');
     expect( Selector().def('dog','>.').alt('_red_').name ).toEqual('dog_red_dog');
     expect( Selector().def('dog','>.').alt('_red' ).name ).toEqual('dog_red');
+
+    // testing selector inheritance
+    var dead_dog = dog.alt('dead_');
+
+    bone = dog.def('bone');
+    expect(             dog.down('bone')).toBeTheSameSelectorAs(bone);
+    expect(        dead_dog.down('bone')).toBeTheSameSelectorAs(bone);
+
+    var huge_dog = dog.alt('huge_');
+    expect(huge_dog             ).toNotBeTheSameSelectorAs(dog);
+    expect(huge_dog.down('bone')).toBeTheSameSelectorAs(bone);
+
+    var living_dead_dog = dead_dog.alt('living');
+    expect( living_dead_dog.down('bone')).toBeTheSameSelectorAs(bone);
+
+    var leash = dog.def('leash');
+    expect(            dog.down('leash')).toBeTheSameSelectorAs(leash);
+    expect(       huge_dog.down('leash')).toBeTheSameSelectorAs(leash);
+    expect(       dead_dog.down('leash')).toBeTheSameSelectorAs(leash);
+    expect(living_dead_dog.down('leash')).toBeTheSameSelectorAs(leash);
+
+    var rotting_meat = dead_dog.def('rotting-meat');
+    expect(function(){      dog.down('rotting-meat'); }).toThrow('selector not found');
+    expect(function(){ huge_dog.down('rotting-meat'); }).toThrow('selector not found');
+    expect(            dead_dog.down('rotting-meat')   ).toBeTheSameSelectorAs(rotting_meat);
+    expect(     living_dead_dog.down('rotting-meat')   ).toBeTheSameSelectorAs(rotting_meat);
+
   });
 
   test('selector.down, selector.up', function(){
@@ -115,28 +166,22 @@
     expect(function(){ selector.down();       }).toThrow('query is undefined');
     expect(function(){ selector.down('nope'); }).toThrow('selector not found');
 
-    expect(selector.down('html').value()       ).toEqual('html');
-    expect(selector.down('html').fullValue()   ).toEqual('html');
-    expect(selector.down('html').toString()    ).toEqual('html');
+    expect(selector.down('html').value()        ).toEqual('html');
+    expect(selector.down('html').fullValue()    ).toEqual('html');
+    expect(selector.down('html').toString()     ).toEqual('html');
+    expect(selector.down('html')                ).toNotBe(selector.down('html'));
+    expect(selector.down('html')                ).toBeTheSameSelectorAs(selector.down('html'));
+    expect(selector.down('html').end            ).toBe(selector);
+    expect(selector.down('html').parentSelector ).toNotBe(selector);
+    expect(selector.down('html').parentSelector ).toBeTheSameSelectorAs(selector);
 
-    expect(selector.down('html').down('body').value()     ).toEqual('body');
-    expect(selector.down('html').down('body').fullValue() ).toEqual('html body');
-    expect(selector.down('html').down('body').toString()  ).toEqual('html body');
+    expect(selector.down('body').value()        ).toEqual('body');
+    expect(selector.down('body').fullValue()    ).toEqual('html body');
+    expect(selector.down('body').toString()     ).toEqual('html body');
 
-    expect(selector.down('html').down('body').down('content').value()     ).toEqual('> .content');
-    expect(selector.down('html').down('body').down('content').fullValue() ).toEqual('html body > .content');
-    expect(selector.down('html').down('body').down('content').toString()  ).toEqual('html body > .content');
-
-    expect(selector.down('html')                               ).toNotBe(selector.down('html'));
-    expect(selector.down('html').childSelectors                ).toBe(selector.down('html').childSelectors);
-    expect(selector.down('html').end                           ).toBe(selector);
-    expect(selector.down('html').parentSelector                ).toNotBe(selector);
-    expect(selector.down('html').parentSelector.childSelectors ).toBe(selector.childSelectors);
-
-    var content = selector.down('html').down('body').down('content');
-    expect(content.up('body').toString()).toEqual('html body');
-    expect(content.up('html').toString()).toEqual('html');
-    expect(content.up()      .toString()).toEqual('[root selector]');
+    expect(selector.down('content').value()     ).toEqual('> .content');
+    expect(selector.down('content').fullValue() ).toEqual('html body > .content');
+    expect(selector.down('content').toString()  ).toEqual('html body > .content');
 
     expect(selector.down('content').toString()                 ).toEqual('html body > .content');
     expect(selector.down('body content').toString()            ).toEqual('html body > .content');
@@ -149,6 +194,32 @@
     expect(selector.down('profile').down('content').toString() ).toEqual('html body > .content > .profile > .content');
 
     expect(function(){ selector.down('header profile'); }).toThrow('selector not found');
+
+
+
+
+    var content = selector.down('content');
+    expect(content.up('body').toString()).toEqual('html body');
+    expect(content.up('html').toString()).toEqual('html');
+    expect(content.up(      ).toString()).toEqual('[root selector]');
+
+
+
+
+
+    // infinate recursion tests
+    var loop = Selector('#loop');
+        loop.def('child').childSelectors.loop_copy = loop;
+
+    expect(function(){ loop.down('child');                 }).toNotThrow('selector not found');
+    expect(function(){ loop.down('loop_copy');             }).toNotThrow('selector not found');
+    expect(function(){ loop.down('child loop_copy');       }).toNotThrow('selector not found');
+    expect(function(){ loop.down('child loop_copy child'); }).toNotThrow('selector not found');
+  });
+
+  test('selector.to, selector.from', function(){
+    var selector = Selector();
+    selector.def('html').def('body').def('content', '>.').def('profile', '>.').def('content', '>.');
   });
 
   test('selector.remove', function(){
