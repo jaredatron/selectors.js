@@ -186,24 +186,28 @@ var S, Selector;
         }
       }
 
-
-      function findAllChildrenNamed(name, selectors, return_first_match){
+      function findAllChildrenNamed(name, selectors, return_first_match, all_selectors){
         var n, parent_selector, child_selector, child_selectors = [], matches = [];
+        all_selectors = all_selectors || [];
 
         while(selectors.length){
           parent_selector = selectors.shift();
-          for (n in parent_selector.childSelectors){
-            child_selector = new SelectorReference(parent_selector, n);
-            child_selectors.push(child_selector);
-            if (name === n){
-              if (return_first_match) return [child_selector];
-              matches.push(child_selector);
+          if (all_selectors.indexOf(parent_selector.childSelectors) === -1){
+            all_selectors.push(parent_selector.childSelectors);
+
+            for (n in parent_selector.childSelectors){
+              child_selector = new SelectorReference(parent_selector, n);
+              child_selectors.push(child_selector);
+              if (name === n){
+                if (return_first_match) return [child_selector];
+                matches.push(child_selector);
+              }
             }
           }
         }
 
         if (child_selectors.length)
-          matches = matches.concat( findAllChildrenNamed(name, child_selectors) );
+          matches = matches.concat( findAllChildrenNamed(name, child_selectors, false, all_selectors) );
 
         return matches;
       }

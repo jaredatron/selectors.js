@@ -209,7 +209,7 @@
 
     // infinate recursion tests
     var loop = Selector('#loop');
-        loop.def('child').childSelectors.loop_copy = loop;
+        loop.def('child').childSelectors.loop_copy = loop.childSelectors;
 
     expect(function(){ loop.down('child');                 }).toNotThrow('selector not found');
     expect(function(){ loop.down('loop_copy');             }).toNotThrow('selector not found');
