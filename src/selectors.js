@@ -50,6 +50,7 @@ var S, Selector;
     selector.valueOf = function valueOf(){ return value; };
     return selector;
   }
+  Selector.prototype.toString = function toString(){ return '<Selector:"'+this.valueOf()+'">'; }
 
   /** SelectorReference
     *   A wrapper for a selector and it's parent selector
