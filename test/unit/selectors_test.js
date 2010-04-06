@@ -327,7 +327,6 @@
 
   test('S', function(){
     expect(S('html').toString()).toEqual('html');
-    expect(S('html').childOf(S)).toBe(true);
   });
 
 })();

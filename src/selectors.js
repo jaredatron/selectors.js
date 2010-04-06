@@ -69,7 +69,7 @@ var S, Selector;
     *     - returns a refernce for the child selector of the given name of the given selector
    **/
   function SelectorReference(selector, name, end){
-    if (selector && selector.childSelectors instanceof Selector){
+    if (selector instanceof SelectorReference){
       if (name){
         this.parentSelector = selector.clone();
         if (name in selector.childSelectors && selector.childSelectors[name] instanceof Selector){
@@ -83,7 +83,7 @@ var S, Selector;
         this.name           = selector.name;
         this.end            = end || selector.end || selector.parentSelector;
       }
-    }else if (selector && selector instanceof Selector){
+    }else if (selector instanceof SelectorReference){
       this.childSelectors = selector;
       this.end            = end;
     }else{
@@ -131,7 +131,7 @@ var S, Selector;
     },
     //
     childOf: function(selector){
-      return (selector && selector.childSelectors instanceof Selector) ?
+      return (selector instanceof SelectorReference) ?
         this.parentSelectors().filter(function(parent){
           return parent.childSelectors === selector.childSelectors;
         }).length > 0
@@ -162,7 +162,7 @@ var S, Selector;
     },
     //
     alt: function(name, value){
-      if (this.parentSelector && this.parentSelector.childSelectors instanceof Selector); else
+      if (this.parentSelector instanceof SelectorReference); else
         throw new TypeError('you can only create alternate versions of selectors with a parent');
 
       if (typeof name !== "string")
@@ -260,7 +260,7 @@ var S, Selector;
     },
     //
     to: function(query){
-      var selector = (query && query.childSelectors instanceof Selector) ? query : this.down(query);
+      var selector = (query instanceof SelectorReference) ? query : this.down(query);
 
       if (!selector.childOf(this)) throw new Error(selector+' is not a child of '+this);
 
@@ -272,7 +272,7 @@ var S, Selector;
     //
     from: function(query){
       if (this.value() === '') throw new Error('from cannot be called on a root selector');
-      return (query && query.childSelectors instanceof Selector) ? query.to(this) : this.up(query).to(this);
+      return (query instanceof SelectorReference) ? query.to(this) : this.up(query).to(this);
     },
     //
     audit: function(prefix, selectors, skip_gandchildren){
@@ -323,14 +323,19 @@ var S, Selector;
 
   (function() {
 
-    function S(query){ return S.down(query); }
-    extend(S, new SelectorReference);
-    delete S.toString;
-    S.def('html').def('body').end.def('head');
-
-    global.S = S;
     global.Selector = function Selector(value){ return new SelectorReference(value); };
     global.Selector.prototype = SelectorReference.prototype;
+    global.Selector.InternalSelector = Selector;
+
+    var p, ROOT_SELECTOR = global.Selector();
+    global.S = function S(query){ return ROOT_SELECTOR.down(query); }
+    global.S.tree = ROOT_SELECTOR.childSelectors;
+    for (p in ROOT_SELECTOR) (function(p){
+      if ( p !== 'toString' && p !== 'valueOf' && typeof ROOT_SELECTOR[p] === 'function')
+        global.S[p] = function(){ return ROOT_SELECTOR[p].apply(ROOT_SELECTOR, arguments); }
+    })(p);
+
+    S.def('html').def('body').end.def('head');
 
   })();
 
