@@ -266,7 +266,7 @@ var S, Selector;
       return this.up(query).to(this);
     },
 
-    audit: function(prefix, selectors){
+    audit: function(prefix, selectors, skip_gandchildren){
       var list = new SelectorsList, n, name, child_selector;
       selectors || (selectors = [this.childSelectors]);
       prefix || (prefix = '');
@@ -274,13 +274,17 @@ var S, Selector;
       for (name in this.childSelectors){
         if (this.childSelectors[name] instanceof Selector){
           child_selector = new SelectorReference(this, name);
+          list[prefix+name] = child_selector.toString();
+
           if (selectors.indexOf(child_selector.childSelectors) === -1){
             selectors.push(child_selector.childSelectors);
-            list[prefix+name] = child_selector.toString();
-            extend(list, child_selector.audit(prefix+name+' ', selectors));
+            if (!skip_gandchildren)
+              extend(list, child_selector.audit(prefix+name+' ', selectors));
           }else{
-            list[prefix+name] = child_selector.toString()+' (infinate loop detected)';
+            if (!skip_gandchildren)
+              extend(list, child_selector.audit(prefix+name+' ', selectors, true));
           }
+
         }
       };
 

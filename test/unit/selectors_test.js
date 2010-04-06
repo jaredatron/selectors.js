@@ -310,15 +310,28 @@
     // infinate recursion tests
     selectors = Selector()
     .def('parent')
-      .def('child').end
+      .alt('small_').end
+      .def('child')
+        .alt('small_').end
+      .end
     .end;
     // manually creating an infinate loop
     selectors.down('child').childSelectors.parent = selectors.down('parent').childSelectors;
 
     audit = selectors.audit();
-    expect( audit["parent"]              ).toEqual("parent");
-    expect( audit["parent child"]        ).toEqual("parent child");
-    expect( audit["parent child parent"] ).toEqual("parent child parent (infinate loop detected)");
+    expect( audit.toString().match(/\n/g).length     ).toBe(12);
+    expect( audit["parent"]                          ).toEqual("parent");
+    expect( audit["parent child"]                    ).toEqual("parent child");
+    expect( audit["parent child parent"]             ).toEqual("parent child parent");
+    expect( audit["parent child parent child"]       ).toEqual("parent child parent child");
+    expect( audit["parent child parent small_child"] ).toEqual("parent child parent child.small");
+    expect( audit["parent small_child"]              ).toEqual("parent child.small");
+    expect( audit["parent small_child parent"]       ).toEqual("parent child.small parent");
+    expect( audit["small_parent"]                    ).toEqual("parent.small");
+    expect( audit["small_parent child"]              ).toEqual("parent.small child");
+    expect( audit["small_parent child parent"]       ).toEqual("parent.small child parent");
+    expect( audit["small_parent small_child"]        ).toEqual("parent.small child.small");
+    expect( audit["small_parent small_child parent"] ).toEqual("parent.small child.small parent");
   });
 
   test('S', function(){
