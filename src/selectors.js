@@ -110,6 +110,21 @@ var S, Selector;
     clone: function(){
       return new SelectorReference(this);
     },
+    parentSelectors: function(){
+      var selectors = [], selector = this.parentSelector;
+      while(selector){
+        selectors.push(new SelectorReference(selector));
+        selector = selector.parentSelector;
+      }
+      return selectors;
+    },
+    childOf: function(selector){
+      return (selector instanceof SelectorReference) ?
+        this.parentSelectors().filter(function(parent){
+          return parent.childSelectors === selector.childSelectors;
+        }).length > 0
+      : false;
+    },
 
     // returns an anonymous, unamed child selector
     plus: function(value){
@@ -233,6 +248,22 @@ var S, Selector;
         selector = selector.parentSelector;
       }
       throw new Error('selector not found');
+    },
+
+    to: function(query){
+      var selector = (query instanceof SelectorReference) ? query : this.down(query);
+
+      if (!selector.childOf(this)) throw new Error(selector+' is not a child of '+this);
+
+      return (this.value() === null) ?
+        selector.toString() :
+        selector.toString().replace(new RegExp('^'+this+' '), '')
+      ;
+    },
+
+    from: function(query){
+      if (this.value() === null) throw new Error('from cannot be called on a root selector');
+      return this.up(query).to(this);
     },
 
     audit: function(prefix, selectors){

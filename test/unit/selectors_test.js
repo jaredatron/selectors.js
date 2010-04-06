@@ -220,6 +220,56 @@
   test('selector.to, selector.from', function(){
     var selector = Selector();
     selector.def('html').def('body').def('content', '>.').def('profile', '>.').def('content', '>.');
+
+    // To
+    expect(function(){ Selector().to(Selector()); }).toThrow("[root selector] is not a child of [root selector]");
+    expect(function(){ selector.to();             }).toThrow('query is undefined');
+    expect(function(){ selector.to('bad_name');   }).toThrow('selector not found');
+
+    expect(selector.to('content')                      ).toEqual('html body > .content');
+    expect(selector.to('profile content')              ).toEqual('html body > .content > .profile > .content');
+    expect(selector.down('html').to('content')         ).toEqual('body > .content');
+    expect(selector.down('html').to('profile content') ).toEqual('body > .content > .profile > .content');
+    expect(selector.down('body').to('content')         ).toEqual('> .content');
+    expect(selector.down('body').to('profile content') ).toEqual('> .content > .profile > .content');
+    expect(selector.down('content').to('content')      ).toEqual('> .profile > .content');
+
+    var body_selector = selector.down('body'),
+        profile_content_selector = selector.down('profile content');
+
+    expect(selector.to(body_selector)                         ).toEqual('html body');
+    expect(selector.to(profile_content_selector)              ).toEqual('html body > .content > .profile > .content');
+    expect(selector.down('html').to(body_selector)            ).toEqual('body');
+    expect(selector.down('html').to(profile_content_selector) ).toEqual('body > .content > .profile > .content');
+
+    // From
+    expect(function(){ selector.from();                          }).toThrow('from cannot be called on a root selector');
+    expect(function(){ selector.down('body').from('bad_name');   }).toThrow('selector not found');
+
+    expect(selector.down('body').from('html')            ).toEqual('body');
+    expect(selector.down('content').from('html')         ).toEqual('body > .content');
+    expect(selector.down('profile content').from('html') ).toEqual('body > .content > .profile > .content');
+    expect(selector.down('profile content').from()       ).toEqual('html body > .content > .profile > .content');
+  });
+
+  test('selector.parentSelectors', function(){
+    var parent_selectors = Selector().def('html').def('body').def('content').def('image').parentSelectors();
+
+    expect(parent_selectors.length).toBe(4);
+    expect(parent_selectors[0].toString()).toEqual('html body content');
+    expect(parent_selectors[1].toString()).toEqual('html body');
+    expect(parent_selectors[2].toString()).toEqual('html');
+    expect(parent_selectors[3].toString()).toEqual('[root selector]');
+  });
+
+  test('selector.childOf', function(){
+    var parent = Selector('parent'),
+        child = parent.def('child');
+
+    expect(child.childOf()            ).toBe(false);
+    expect(child.childOf(new Selector)).toBe(false);
+    expect(child.childOf(parent)      ).toBe(true);
+    expect(parent.childOf(child)      ).toBe(false);
   });
 
   test('selector.remove', function(){
