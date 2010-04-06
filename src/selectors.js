@@ -251,9 +251,10 @@ var S, Selector;
   });
 
 
-  function S(name){ return S.down(name); }
+  function S(query){ return S.down(query); }
   extend(S, new AnonymousSelectorReference);
-  S.def('html').def('body');
+  delete S.toString;
+  S.def('html').def('body').end.def('head');
 
   global.S = S;
   global.Selector = AnonymousSelectorReference;
