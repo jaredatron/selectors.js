@@ -332,6 +332,22 @@
     expect( audit["small_parent child parent"]       ).toEqual("parent.small child parent");
     expect( audit["small_parent small_child"]        ).toEqual("parent.small child.small");
     expect( audit["small_parent small_child parent"] ).toEqual("parent.small child.small parent");
+
+
+    expect(audit.toString()).toBe(
+      'parent                              parent\n'+
+      'parent child                        parent child\n'+
+      'parent child parent                 parent child parent\n'+
+      'parent child parent child           parent child parent child\n'+
+      'parent child parent small_child     parent child parent child.small\n'+
+      'parent small_child                  parent child.small\n'+
+      'parent small_child parent           parent child.small parent\n'+
+      'small_parent                        parent.small\n'+
+      'small_parent child                  parent.small child\n'+
+      'small_parent child parent           parent.small child parent\n'+
+      'small_parent small_child            parent.small child.small\n'+
+      'small_parent small_child parent     parent.small child.small parent\n'
+    );
   });
 
   test('S', function(){

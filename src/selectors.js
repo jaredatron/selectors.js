@@ -304,16 +304,17 @@ var S, Selector;
   // The object returned by audit
   function SelectorsList(){}
   SelectorsList.prototype.toString = function(){
-    var string = '', length = 0, name;
+    var string = '', length = 0, name, value;
 
     for (name in this)
       if (name !== 'toString')
         length = name.length > length ? name.length : length;
 
     for (name in this){
+      value = this[name];
       if (name !== 'toString'){
         while(name.length < length) name += ' ';
-        string += name+'     '+this[name]+"\n";
+        string += name+'     '+value+"\n";
       }
     };
 
