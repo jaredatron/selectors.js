@@ -39,65 +39,74 @@ var S, Selector;
     }
   }
 
-
   /** Selector
     *   A simple object who's toString method stores the selector's value
     *   and who's properties/values are sub selectors
    **/
   function Selector(value, super_selector){
+    if (typeof value === 'undefined') value = '';
+    if (value instanceof String) value = String(value);
+    if (typeof value !== 'string') throw new Error('Selector value must be a string');
     var selector = super_selector ? new Delegate(super_selector) : this;
-    value || (value = null);
-    selector.valueOf = function valueOf(){ return value; };
+    selector.toString = function toString(){ return value; };
     return selector;
   }
-  Selector.prototype.toString = function toString(){ return '<Selector:"'+this.valueOf()+'">'; }
+  // Selector.prototype.toString = function toString(){ return '<Selector:"'+this.valueOf()+'">'; };
 
   /** SelectorReference
     *   A wrapper for a selector and it's parent selector
     *
+    *   new SelectorReference(value);
+    *     - returns a refernce for a selector of the given value
+    *
     *   new SelectorReference(selector);
-    *     - return a refernce for the given selector
+    *     - returns a refernce for the given selector
+    *
+    *   new SelectorReference(selectorReference);
+    *     - returns a clone of the given selector refernce
+    *
     *   new SelectorReference(selectorReference, name);
-    *     - return a refernce for the child selector of the given name of the given selector
+    *     - returns a refernce for the child selector of the given name of the given selector
    **/
   function SelectorReference(selector, name, end){
-    if (selector instanceof Selector){
-      this.childSelectors = selector;
-    }else{
+    if (selector && selector.childSelectors instanceof Selector){
       if (name){
         this.parentSelector = selector.clone();
-        if (name in selector.childSelectors){
+        if (name in selector.childSelectors && selector.childSelectors[name] instanceof Selector){
           this.childSelectors = selector.childSelectors[name];
           this.name           = name;
           this.end            = end || selector;
-        }else throw new TypeError("'"+selector+"' has no child selectors matching '"+name+"'");
+        }else throw new TypeError("'"+selector+"' has no child selectors named '"+name+"'");
       }else{
         this.parentSelector = selector.parentSelector;
         this.childSelectors = selector.childSelectors;
         this.name           = selector.name;
-        this.end            = end || selector.parentSelector;
+        this.end            = end || selector.end || selector.parentSelector;
       }
+    }else if (selector && selector instanceof Selector){
+      this.childSelectors = selector;
+      this.end            = end;
+    }else{
+      this.childSelectors = new Selector(selector);
+      this.end            = end;
     }
   }
 
-  function AnonymousSelectorReference(value){
-    return new SelectorReference(new Selector(value));
-  }
-  AnonymousSelectorReference.prototype = SelectorReference.prototype;
-
-
   extend(SelectorReference.prototype, {
+    //
     toString: function(){
-      return this.childSelectors.valueOf() ? this.fullValue() : "[root selector]";
+      return this.childSelectors.toString() ? this.fullValue() : "[root selector]";
     },
+    //
     value: function(value){
       if (typeof value === 'string'){
         this.childSelectors.toString = function toString(){ return value; };
         return this;
       }else{
-        return this.childSelectors.valueOf();
+        return this.childSelectors.toString();
       }
     },
+    //
     fullValue: function(){
       // TODO replace with `return selector.from();`
       var parent_selector = this.parentSelector, value = this.value();
@@ -107,9 +116,11 @@ var S, Selector;
       }
       return value;
     },
+    //
     clone: function(){
       return new SelectorReference(this);
     },
+    //
     parentSelectors: function(){
       var selectors = [], selector = this.parentSelector;
       while(selector){
@@ -118,6 +129,7 @@ var S, Selector;
       }
       return selectors;
     },
+    //
     childOf: function(selector){
       return (selector instanceof SelectorReference) ?
         this.parentSelectors().filter(function(parent){
@@ -125,13 +137,12 @@ var S, Selector;
         }).length > 0
       : false;
     },
-
     // returns an anonymous, unamed child selector
     plus: function(value){
       if (typeof value !== 'string')
         throw new TypeError('first argument to plus must be a string');
 
-      var selector = new AnonymousSelectorReference(value);
+      var selector = new SelectorReference(value);
       selector.parentSelector = this.clone();
       selector.end = this;
       return selector;
@@ -149,7 +160,7 @@ var S, Selector;
       this.childSelectors[name] = new Selector(value);
       return new SelectorReference(this, name);
     },
-
+    //
     alt: function(name, value){
       if (this.parentSelector instanceof SelectorReference); else
         throw new TypeError('you can only create alternate versions of selectors with a parent');
@@ -177,7 +188,6 @@ var S, Selector;
       this.parentSelector.childSelectors[name] = new Selector(value, this.childSelectors);
       return new SelectorReference(this.parentSelector, name, this);
     },
-
     // turns this selector into an anonymous selector
     remove: function(){
       if (this.parentSelector){
@@ -187,8 +197,7 @@ var S, Selector;
       }
       return this;
     },
-
-
+    //
     down: (function() {
 
       function down(query){
@@ -212,11 +221,13 @@ var S, Selector;
             all_selectors.push(parent_selector.childSelectors);
 
             for (n in parent_selector.childSelectors){
-              child_selector = new SelectorReference(parent_selector, n);
-              child_selectors.push(child_selector);
-              if (name === n){
-                if (return_first_match) return [child_selector];
-                matches.push(child_selector);
+              if (parent_selector.childSelectors[n] instanceof Selector){
+                child_selector = new SelectorReference(parent_selector, n);
+                child_selectors.push(child_selector);
+                if (name === n){
+                  if (return_first_match) return [child_selector];
+                  matches.push(child_selector);
+                }
               }
             }
           }
@@ -231,8 +242,6 @@ var S, Selector;
       return down;
 
     })(),
-
-
     // searches for and returns the deepest matching parent selector
     up: function(name){
       var n, selector = this.parentSelector;
@@ -249,23 +258,23 @@ var S, Selector;
       }
       throw new Error('selector not found');
     },
-
+    //
     to: function(query){
       var selector = (query instanceof SelectorReference) ? query : this.down(query);
 
       if (!selector.childOf(this)) throw new Error(selector+' is not a child of '+this);
 
-      return (this.value() === null) ?
+      return (this.value() === '') ?
         selector.toString() :
         selector.toString().replace(new RegExp('^'+this+' '), '')
       ;
     },
-
+    //
     from: function(query){
-      if (this.value() === null) throw new Error('from cannot be called on a root selector');
+      if (this.value() === '') throw new Error('from cannot be called on a root selector');
       return this.up(query).to(this);
     },
-
+    //
     audit: function(prefix, selectors, skip_gandchildren){
       var list = new SelectorsList, n, name, child_selector;
       selectors || (selectors = [this.childSelectors]);
@@ -290,35 +299,38 @@ var S, Selector;
 
       return list;
     }
-
   });
 
+  // The object returned by audit
   function SelectorsList(){}
   SelectorsList.prototype.toString = function(){
-    var string = '', length = 0, name, value;
+    var string = '', length = 0, name;
 
     for (name in this)
       if (name !== 'toString')
         length = name.length > length ? name.length : length;
 
     for (name in this){
-      value = this[name];
       if (name !== 'toString'){
         while(name.length < length) name += ' ';
-        string += name+'     '+value+"\n";
+        string += name+'     '+this[name]+"\n";
       }
     };
 
     return string;
   };
 
+  (function() {
 
-  function S(query){ return S.down(query); }
-  extend(S, new AnonymousSelectorReference);
-  delete S.toString;
-  S.def('html').def('body').end.def('head');
+    function S(query){ return S.down(query); }
+    extend(S, new SelectorReference);
+    delete S.toString;
+    S.def('html').def('body').end.def('head');
 
-  global.S = S;
-  global.Selector = AnonymousSelectorReference;
+    global.S = S;
+    global.Selector = function Selector(value){ return new SelectorReference(value); };
+    global.Selector.prototype = SelectorReference.prototype;
+
+  })();
 
 })(this);

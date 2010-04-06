@@ -33,9 +33,9 @@
 
     expect(Selector())
       .toNotHaveProperty('parentSelector')
-      .toNotHaveProperty('name')
-      .toNotHaveProperty('end');
-    expect(Selector().value()             ).toEqual(null);
+      .toNotHaveProperty('name');
+    expect(Selector().end                 ).toBe(undefined);
+    expect(Selector().value()             ).toEqual('');
     expect(Selector().toString()          ).toEqual("[root selector]");
     expect(Selector("> .head").value()    ).toEqual("> .head");
     expect(Selector("> .head").fullValue()).toEqual("> .head");
