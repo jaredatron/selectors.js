@@ -27,9 +27,9 @@
   module("Selector");
 
   test("Selector", function() {
-    expect(Selector    ).toBeAnInstanceOf(Function);
-    expect(new Selector).toBeAnInstanceOf(Selector);
-    expect(Selector()  ).toBeAnInstanceOf(Selector);
+    expect(Selector    ).toBeA(Function);
+    expect(new Selector).toBeA(Selector);
+    expect(Selector()  ).toBeA(Selector);
 
     expect(Selector())
       .toNotHaveProperty('parentSelector')
