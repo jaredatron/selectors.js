@@ -131,7 +131,7 @@ var S, Selector;
     },
     //
     childOf: function(selector){
-      return (selector instanceof SelectorReference) ?
+      return (selector && selector.childSelectors instanceof Selector) ?
         this.parentSelectors().filter(function(parent){
           return parent.childSelectors === selector.childSelectors;
         }).length > 0
@@ -162,7 +162,7 @@ var S, Selector;
     },
     //
     alt: function(name, value){
-      if (this.parentSelector instanceof SelectorReference); else
+      if (this.parentSelector && this.parentSelector.childSelectors instanceof Selector); else
         throw new TypeError('you can only create alternate versions of selectors with a parent');
 
       if (typeof name !== "string")
@@ -260,7 +260,7 @@ var S, Selector;
     },
     //
     to: function(query){
-      var selector = (query instanceof SelectorReference) ? query : this.down(query);
+      var selector = (query && query.childSelectors instanceof Selector) ? query : this.down(query);
 
       if (!selector.childOf(this)) throw new Error(selector+' is not a child of '+this);
 
@@ -272,7 +272,7 @@ var S, Selector;
     //
     from: function(query){
       if (this.value() === '') throw new Error('from cannot be called on a root selector');
-      return this.up(query).to(this);
+      return (query && query.childSelectors instanceof Selector) ? query.to(this) : this.up(query).to(this);
     },
     //
     audit: function(prefix, selectors, skip_gandchildren){

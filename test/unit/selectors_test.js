@@ -163,6 +163,7 @@
       .end
     ;
 
+    // DOWN
     expect(function(){ selector.down();       }).toThrow('query is undefined');
     expect(function(){ selector.down('nope'); }).toThrow('selector not found');
 
@@ -195,17 +196,11 @@
 
     expect(function(){ selector.down('header profile'); }).toThrow('selector not found');
 
-
-
-
+    // UP
     var content = selector.down('content');
     expect(content.up('body').toString()).toEqual('html body');
     expect(content.up('html').toString()).toEqual('html');
     expect(content.up(      ).toString()).toEqual('[root selector]');
-
-
-
-
 
     // infinate recursion tests
     var loop = Selector('#loop');
@@ -250,6 +245,9 @@
     expect(selector.down('content').from('html')         ).toEqual('body > .content');
     expect(selector.down('profile content').from('html') ).toEqual('body > .content > .profile > .content');
     expect(selector.down('profile content').from()       ).toEqual('html body > .content > .profile > .content');
+
+    expect(selector.down('profile content').from(selector)                  ).toEqual('html body > .content > .profile > .content');
+    expect(selector.down('profile content').from(selector.down('content'))  ).toEqual('> .profile > .content');
   });
 
   test('selector.parentSelectors', function(){
@@ -352,6 +350,7 @@
 
   test('S', function(){
     expect(S('html').toString()).toEqual('html');
+    expect(S('html').childOf(S)).toBe(true);
   });
 
 })();
