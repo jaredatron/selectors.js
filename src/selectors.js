@@ -226,17 +226,13 @@ var S, Selector;
           selector = selector.parentSelector;
         }
       }
-      // TODO refactor this now that SelectorRefernces know their name
       while(selector){
-        if (selector.parentSelector)
-          for (n in selector.parentSelector.childSelectors)
-            if (selector.parentSelector.childSelectors[n] === selector.childSelectors)
-              if (name === n) return new SelectorReference(selector.parentSelector, name);
+        if (selector.parentSelector && selector.parentSelector.childSelectors[name] === selector.childSelectors)
+          return new SelectorReference(selector.parentSelector, name);
         selector = selector.parentSelector;
       }
       throw new Error('selector not found');
     },
-
 
     audit: function(prefix, selectors){
       var list = new SelectorsList, n, name, child_selector;
