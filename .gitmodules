@@ -7,3 +7,6 @@
 [submodule "vendor/jquery"]
 	path = vendor/jquery
 	url = git://github.com/jquery/jquery.git
+[submodule "vendor/qunit.expect"]
+	path = vendor/qunit.expect
+	url = git://github.com/deadlyicon/qunit.expect.git
