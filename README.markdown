@@ -4,6 +4,14 @@ selectors.js is designed for projects that deal with heaps of css selectors and 
 
 At it's core selectors.js allows you to define the tree of your css selectors and then enables you to move from element(s) to element(s) with ease.
 
+## Please Note! S() !== $()
+
+selectors.js is built on top of jQuery but it uses S (capitol s) and does not change $ (the dollar sign) in any way.
+
+S() queries for a selector by name
+
+$() does the jquery thing
+
 ## Documentation:
 
 Lets say you have the following markup
