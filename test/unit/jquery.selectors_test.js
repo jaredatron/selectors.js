@@ -49,6 +49,18 @@
     events.length = 0;
   });
 
+  test('selector.extend', 2, function(){
+    S('profile')
+      .extend({
+        addFriend: function(){}
+      })
+    ;
+
+    expect( S('profile').get().addFriend ).toBeA(Function);
+
+    S('profile').click(function(){ expect(this.addFriend).toBeA(Function); }).get().click();
+  });
+
   module("jQuery");
 
   test('jQuery().toSelector', function(){

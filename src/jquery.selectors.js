@@ -18,19 +18,13 @@
     up: function up(query, plus){
       var selector = this.toSelector().up(query);
       if (plus) selector = selector.plus(plus);
-
-      var collection = this.parents(selector.toString());
-      collection.toSelector = function toSelector(){ return selector; };
-      return collection;
+      return newCollectionFor(selector, this.parents(selector.toString()));
     },
     down: function down(query, plus){
       var parent_selector = this.toSelector(),
           selector        = parent_selector.down(query);
       if (plus) selector = selector.plus(plus);
-
-      var collection = this.find(selector.from(parent_selector));
-      collection.toSelector = function toSelector(){ return selector; };
-      return collection;
+      return newCollectionFor(selector, this.find(selector.from(parent_selector)));
     }
   });
 
@@ -39,18 +33,22 @@
     collection = jQuery(collection);
     if (selector.childSelectors.prototype)
       collection = jQuery.merge(new Delegate(selector.childSelectors.prototype), collection);
+
+    collection.toSelector = function toSelector(){ return selector; };
     return collection;
   }
 
   jQuery.extend(Selector.prototype, {
     get: function(){
-      var selector = this, collection = jQuery(this.toString());
-      if (this.childSelectors.prototype) collection = newCollectionFor(selector);
-      collection.toSelector = function toSelector(){ return selector; };
+      var selector = this, collection = newCollectionFor(selector, this.toString());
       return collection;
     },
     bind: function(types, data, fn){
       var selector = this, type;
+
+      if (typeof data === 'function'){
+        fn = data; data = undefined;
+      }
 
       if (typeof types === 'string')
         DOCUMENT.delegate(this.toString(), types, data, function(){
