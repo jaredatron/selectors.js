@@ -1,6 +1,6 @@
 ;(function() {
 
-  var undefined, events = $(document).delegate('a','a',function(){}).data().events.live = [];
+  var undefined, events = $(document).delegate('a','a',function(){}).data().events.live = []; events.length = 0;
 
   module("Selector");
 
@@ -33,28 +33,18 @@
     expect( body_selector.plus('> .content').get() ).toReferenceTheSameHtmlElementsAs(body_collection.find('> .content'));
   });
 
-  test("selector.bind", function() {
-    expect(Selector().bind).toBeAnInstanceOf(Function);
+  test("selector.bind", 5, function() {
+    var data, handler;
 
-    var handler = function(){}, data = {};
-
-    expect(events.length).toEqual(0);
-
-    Selector('a').bind('test', data, handler);
-    expect(events[0].selector).toEqual('a');
-    expect(events[0].origType).toEqual('test');
+    data = {};
+    handler = function(event, data){
+      expect(this).toBeAnInstanceOf(jQuery).toReferenceTheSameHtmlElementsAs($('body'));
+    };
+    S('body').bind('click', data, handler);
+    expect(events[0].selector).toEqual('html body');
+    expect(events[0].origType).toEqual('click');
     expect(events[0].data    ).toBe(data);
-    expect(events[0].handler ).toBe(handler);
-
-    Selector('a').bind('test', handler);
-    expect(events[1].selector).toEqual('a');
-    expect(events[1].origType).toEqual('test');
-    expect(events[1].handler ).toBe(handler);
-
-    Selector('span').bind({test: handler});
-    expect(events[2].selector).toEqual('span');
-    expect(events[2].origType).toEqual('test');
-    expect(events[2].handler ).toBe(handler);
+    $('body').trigger('click');
 
     events.length = 0;
   });
