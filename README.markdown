@@ -2,7 +2,7 @@
 
 selectors.js is designed for projects that deal with heaps of css selectors and need a way to store and manage them. And a lot more. =]
 
-At it's core selectors.js allows you to define the tree of your css selectors and then enables you to move from element(s) to element(s) with ease.
+At its core selectors.js allows you to define the tree of your css selectors and then enables you to move from element(s) to element(s) with ease.
 
 ## Please Note! S() !== $()
 
@@ -71,7 +71,7 @@ The up and down methods allow you to traverse from one selector to another
     //-> "html body > .header > .logo > img"
 
 ### get
-Selectors can be easily turned into jQuery collections the their matching elements
+A Selector can easily be used to query the DOM for elements matching its value
 
     S('body').get();
     //-> [body]
@@ -109,7 +109,7 @@ this makes doing tasks like this a lot simpler
     S('header logo image').click(function(){ this.up('body').remove(); });
 
 ### Anonymous Selectors
-if you don't want to mess with trees of selectors but your still want the power of selector objects you can create anonymous Selectors like so
+if you don't want to mess with defining trees of selectors but you still want the power of a Selector object you can create anonymous Selectors like so
 
     var links = Selector('a[href]');
 
@@ -149,7 +149,7 @@ extend allows you to add properties to the jQuery collection a given selector re
     S('footer image').get().goBig;
     //-> undefined
 
-throw super simple even delegation in the mix and you have a very powerful DSL
+throw super simple event delegation in the mix and you have a very powerful DSL
 
     Selector('img')
       .extend('goBig', function(){
