@@ -80,12 +80,18 @@
     expect( S('profile content').get().up().up().up().up()        ).toReferenceTheSameHtmlElementsAs( $('html')                            );
     expect( S('profile content').get().up().up().up().up().up()   ).toReferenceTheSameHtmlElementsAs( $()                                  );
 
-
   });
 
 
-  test('jQuery().to, jQuery().to', function(){
-
+  test('jQuery().to, jQuery().from', function(){
+    function test(from, to){
+      expect( S(from).get().to(to)    ).toEqual( S(from).to(to)         );
+      expect( S(to).get().from(from)  ).toEqual( S(to).get().from(from) );
+    }
+    test('html', 'body');
+    test('html', 'content');
+    test('html', 'profile content');
+    test('content', 'profile content');
   });
 
 
