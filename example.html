@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="en">
+<head>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.js" type="text/javascript" charset="utf-8"></script>
+  <script src="src/selectors.js" type="text/javascript" charset="utf-8"></script>
+  <script src="src/jquery.selectors.js" type="text/javascript" charset="utf-8"></script>
+  <style type="text/css" media="screen">
+    body > #todo_list > ul > li{
+      width: 300px;
+      clear: both;
+      border-bottom: 1px solid grey;
+    }
+    body > #todo_list > ul > li.important{
+      color: red;
+    }
+    body > #todo_list > ul > li > h3{
+      float: left;
+      display: inline;
+      margin: 0;
+    }
+    body > #todo_list > ul > li > a{
+      float: right;
+    }
+  </style>
+  <script type="text/javascript" charset="utf-8">
+
+    S('body')
+      .def('todo_list', '>#')
+        .def('new_value', '> input[type="text"]').end
+        .def('add_button', '> input[type="button"]')
+          .alt('normal_', '&[value="add"]').end
+          .alt('important_', '&[value="add important"]').end
+        .end
+        .def('list', '> ul')
+          .def('item', '> li')
+            .def('name', '> h3').end
+            .def('close', '> a').end
+            .alt('important_', '&.').end
+            // ('important_item', '&.important').end
+          .end
+        .end
+      .end
+    .end;
+
+
+
+    S('todo_list')
+      .bind({
+        add_item: function(event, important){
+          var new_value = this.down('new_value'),
+              value = new_value.val();
+
+          if (!value) return false;
+          this.down('list').createItem(value, important);
+          new_value.val('');
+          setTimeout(function(){ new_value.focus(); }, 1);
+        }
+      })
+    ;
+
+    S('todo_list new_value')
+      .bind('keyup', function(event){
+        if (event.which === 13){
+          if (event.shiftKey){
+            this.up('todo_list').down('important_add_button').click();
+          }else{
+            this.up('todo_list').down('normal_add_button').click();
+          }
+          return false;
+        }
+      })
+    ;
+
+    S('todo_list normal_add_button').click(function(){
+      this.up('todo_list').trigger('add_item', false);
+    });
+
+    S('todo_list important_add_button').click(function(){
+      this.up('todo_list').trigger('add_item', true);
+    });
+
+    S('todo_list list')
+      .extend({
+        createItem: function(name, important){
+          this.append(
+            '<li class="'+(important ? 'important' : '')+'">'+
+              '<h3>'+name+'</h3>'+
+              '<a href="#">X</a>'+
+            '</li>'
+          );
+          return this;
+        }
+      })
+    ;
+
+    S('todo_list list important_item close').click(function(){
+      return confirm('are you sure you want to delete this important item?');
+    });
+
+    S('todo_list list item close').click(function(event){
+      event.preventDefault();
+      this.up('item').remove();
+    });
+
+    $(document).ready(function(){ S('new_value').get().focus(); })
+
+  </script>
+</head>
+<body>
+  <div id="todo_list">
+    <input type="text"/><input type="button" value="add" /><input type="button" value="add important" />
+    <ul></ul>
+  </div>
+</body>
+</html>
