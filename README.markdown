@@ -32,7 +32,7 @@ The following is how you would define your selector tree
 
     S('body')
       .def('header', '> .header')
-        .def('logo', '> .log')
+        .def('logo', '> .logo')
           .def('image', '> img').end
         .end
       .end
