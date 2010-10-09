@@ -201,6 +201,7 @@ var S, Selector;
     down: (function() {
 
       function down(query){
+        if (typeof query === 'undefined') throw new Error('query is undefined');
         var names = query.replace(SURROUNDING_WHITE_SPACE,'').split(/\s+/), selectors = [this];
         while(names.length) selectors = findAllChildrenNamed(names.shift(), selectors, names.length === 0);
         if (selectors[0]){
