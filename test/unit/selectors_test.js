@@ -15,22 +15,36 @@
 
   test("Selector#down", function() {
 
-    var root;
+    var body;
 
     expect( Selector().down('a','a').toString() ).toBe('a');
 
-    root = Selector('html body');
-    expect( root.down('header', '#header').toString() ).toBe('html body #header');
-    expect( root.down('header'           ).toString() ).toBe('html body #header');
+    body = Selector('body');
+    expect( body.down('header', '#header').toString() ).toBe('body #header');
+    expect( body.down('header'           ).toString() ).toBe('body #header');
 
+    expect(function(){ body.down('bad name', 'bad.name'); }).toThrow('invalid selector name "bad name"');
+    expect(function(){ body.down('nonexistant');          }).toThrow('selector "nonexistant" not found');
 
-    expect(function(){ root.down('bad name', 'bad.name'); }).toThrow('selector names cannot have spaces');
-    expect(function(){ root.down('nonexistant');          }).toThrow('selector "nonexistant" not found');
+    body
+      .down('header',  '> .header')
+        .down('logo', 'img').end()
+        .down('a',  'a').end()
+      .end()
+      .down('a',  'a').end()
+    .end();
+
+    expect( body.down('header'      ).toString() ).toBe('body > .header');
+    expect( body.down('logo'        ).toString() ).toBe('body > .header img');
+    expect( body.down('a'           ).toString() ).toBe('body a');
+    expect( body.down('header logo' ).toString() ).toBe('body > .header img');
+    expect( body.down('header a'    ).toString() ).toBe('body > .header a');
 
   });
 
   test('Selector#end', function(){
-    var root = Selector();
+    var root = Selector(), html, body;
+
     root
       .down('html', 'html')
         .down('body', 'body')
@@ -41,14 +55,36 @@
       .end()
     ;
 
-    expect( root.down('html').end()                       ).toBe(root);
-    expect( root.down('html').down('body').end()          ).toBeTheSameSelectorAs( root.down('html') );
-    expect( root.down('html').down('body').end().end()    ).toBe(root);
+    expect( root.down('html'             ).end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('body'             ).end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('header'           ).end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('content'          ).end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('footer'           ).end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('html body'        ).end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('html header'      ).end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('html content'     ).end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('html footer'      ).end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('html body header' ).end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('html body content').end() ).toBeTheSameSelectorAs(root);
+    expect( root.down('html body footer' ).end() ).toBeTheSameSelectorAs(root);
 
+    html = root.down('html');
+    expect( html.down('body'        ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('header'      ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('content'     ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('footer'      ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('body'        ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('header'      ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('content'     ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('footer'      ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('body header' ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('body content').end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('body footer' ).end() ).toBeTheSameSelectorAs(html);
 
-
-
-
+    body = root.down('body');
+    expect( body.down('header'      ).end() ).toBeTheSameSelectorAs(body);
+    expect( body.down('content'     ).end() ).toBeTheSameSelectorAs(body);
+    expect( body.down('footer'      ).end() ).toBeTheSameSelectorAs(body);
 
   });
 
@@ -71,37 +107,5 @@
      });
 
   });
-
-
-  //
-  // test("Selector", function() {
-  //   expect(Selector    ).toBeA(Function);
-  //   expect(new Selector).toBeA(Selector);
-  //   expect(Selector()  ).toBeA(Selector);
-  //
-  //   expect(Selector())
-  //     .toNotHaveProperty('parentSelector')
-  //     .toNotHaveProperty('name');
-  //   expect(Selector().end                 ).toBe(undefined);
-  //   expect(Selector().value()             ).toEqual('');
-  //   expect(Selector().toString()          ).toEqual("[root selector]");
-  //   expect(Selector("> .head").value()    ).toEqual("> .head");
-  //   expect(Selector("> .head").fullValue()).toEqual("> .head");
-  // });
-  //
-  // test('selector.plus', function(){
-  //   expect(function(){ Selector().plus(); }).toThrowA(TypeError);
-  //
-  //   var header = new Selector("> .header"),
-  //       logo   = header.plus('> logo'),
-  //       image  = logo.plus('> img');
-  //
-  //   expect(logo.value()     ).toEqual("> logo");
-  //   expect(logo.fullValue() ).toEqual("> .header > logo");
-  //   expect(logo.end         ).toBe(header);
-  //   expect(image.value()    ).toEqual("> img");
-  //   expect(image.fullValue()).toEqual("> .header > logo > img");
-  //   expect(image.end        ).toBe(logo);
-  // });
 
 })();
