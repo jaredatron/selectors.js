@@ -4,9 +4,19 @@ function Selector(value){
 
 ;(function() {
 
-  var
-      VALID_SELECTOR_NAME     = /^[a-z0-9_-]+$/i,
-      SURROUNDING_WHITE_SPACE = /(^\s*|\s*$)/g;
+  var SPACES                   = /\s*/,
+      VALID_SELECTOR_NAME      = /^[a-z0-9_-]+$/i,
+      SURROUNDING_WHITE_SPACE  = /(^\s*|\s*$)/g,
+      NAME_REGEXP              = /{name}/g,
+      SELECTOR_VALUE_SHORTHAND = {
+        '.'   :'.{name}',
+        '#'   :'#{name}',
+        '[]'  :'[{name}]',
+        '>'   :'> {name}',
+        '>.'  :'> .{name}',
+        '>#'  :'> #{name}',
+        '>[]' :'> [{name}]'
+      };
 
   window.Selector.Selector = Selector;
   window.Selector.Node     = Node;
@@ -60,6 +70,11 @@ function Selector(value){
         if (arguments.length === 2) {
           if (VALID_SELECTOR_NAME.test(name)); else throw 'invalid selector name "'+name+'"';
           if (name in this.node.nodes) throw 'selector "'+name+'" already defined';
+
+          value = value.replace(SPACES,'');
+          if (value in SELECTOR_VALUE_SHORTHAND) value = SELECTOR_VALUE_SHORTHAND[value];
+          value = value.replace(NAME_REGEXP, name);
+
           this.node.nodes[name] = new Node(value);
           return new Selector(this, name, this);
         }

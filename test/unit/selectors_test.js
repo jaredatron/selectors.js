@@ -20,8 +20,8 @@
     expect( Selector().down('a','a').toString() ).toBe('a');
 
     body = Selector('body');
-    expect( body.down('header', '#header').toString() ).toBe('body #header');
-    expect( body.down('header'           ).toString() ).toBe('body #header');
+    expect( body.down('content', '#content').toString() ).toBe('body #content');
+    expect( body.down('content'            ).toString() ).toBe('body #content');
 
     expect(function(){ body.down('bad name', 'bad.name'); }).toThrow('invalid selector name "bad name"');
     expect(function(){ body.down('nonexistant');          }).toThrow('selector "nonexistant" not found');
@@ -45,6 +45,28 @@
     expect( body.down('a'           ).toString() ).toBe('body a');
     expect( body.down('header logo' ).toString() ).toBe('body > .header img');
     expect( body.down('header a'    ).toString() ).toBe('body > .header a');
+
+  });
+
+
+  test("Selector#down shorthand", function() {
+
+    var root = Selector();
+
+    expect( root.down('header','>.').toString() ).toBe('> .header');
+    // expect( root.down('header','>.').toString() ).toBe('> .header');
+
+
+    [ ['.'  , '.name'   ],
+      ['#'  , '#name'   ],
+      ['[]' , '[name]'  ],
+      ['>'  , '> name'  ],
+      ['>.' , '> .name' ],
+      ['>#' , '> #name' ],
+      ['>[]', '> [name]']
+    ].forEach(function(shortcut){
+      expect( Selector().down("name", shortcut[0]).toString() ).toEqual(shortcut[1]);
+    });
 
   });
 
