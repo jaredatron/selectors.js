@@ -41,9 +41,6 @@
       .end()
     ;
 
-    DEBUG = root;
-    console.dir(root);
-
     expect( root.down('html').end()                       ).toBe(root);
     expect( root.down('html').down('body').end()          ).toBeTheSameSelectorAs( root.down('html') );
     expect( root.down('html').down('body').end().end()    ).toBe(root);
@@ -52,6 +49,26 @@
 
 
 
+
+  });
+
+  test('Selector#tree', function(){
+    var map = Selector();
+    map
+      .down('a', '#a')
+        .down('b', '.b')
+          .down('c','c').end()
+        .end()
+      .end()
+    ;
+
+    expect(map.tree()).toDeepEqual({
+      'a "#a"': {
+        'b ".b"': {
+          'c "c"': { }
+         }
+       }
+     });
 
   });
 

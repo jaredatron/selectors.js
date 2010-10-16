@@ -13,9 +13,18 @@
     this.value = value || '';
     this.nodes = {};
   }
-  Node.prototype.toString = function(){
-    return '<Node: "'+this.value+'">';
-  }
+  extend(Node.prototype, {
+    toString: function(){
+      return '<Node: "'+this.value+'">';
+    },
+    tree: function(){
+      var tree  = {},
+          nodes = this.nodes
+          name;
+      for (name in nodes) tree[name+' "'+nodes[name].value+'"'] = nodes[name].tree();
+      return tree;
+    }
+  })
 
   function NodeReference(parent, name, previous){
     if (parent){
@@ -47,6 +56,10 @@
     },
     end: function(){
       return this.previous;
+    },
+
+    tree: function(){
+      return this.node.tree();
     }
   });
 
