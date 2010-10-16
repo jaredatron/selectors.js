@@ -18,7 +18,7 @@
     if (expected instanceof Selector); else throw new Error('toBeTheSameSelectorAs requies that the given object be a Selector');
     return this.each(function(actual){
       if (actual instanceof Selector); else throw new Error('toBeTheSameSelectorAs requies that the actual object be a Selector');
-      strictEqual(actual.childSelectors, expected.childSelectors,
+      strictEqual(actual.node, expected.node,
         "expecting '"+QUnit.jsDump.parse(actual)+"' to reference the same selector as '"+QUnit.jsDump.parse(expected)+"'");
     });
   };
