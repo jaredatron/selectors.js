@@ -116,6 +116,19 @@
 
   });
 
+  test('Selector#when', function(){
+
+    var root = Selector('html');
+    root
+      .down('a', 'a')
+        .down('span', 'span');
+
+    expect( root.down('a').down('span').toString()                      ).toBe('html a span');
+    expect( root.down('a').when(':hover').down('span').toString()       ).toBe('html a:hover span');
+    expect( root.down('a').when(':hover').down('span').end().toString() ).toBe( root.down('a').when(':hover').toString() );
+
+  });
+
   test('Selector#tree', function(){
     var map = Selector();
     map
