@@ -26,6 +26,12 @@
     expect(function(){ body.down('bad name', 'bad.name'); }).toThrow('invalid selector name "bad name"');
     expect(function(){ body.down('nonexistant');          }).toThrow('selector "nonexistant" not found');
 
+    expect(function(){
+      body.down('double', '> .double');
+      body.down('double', '> .double');
+    }).toThrow('selector "double" already defined');
+
+
     body
       .down('header',  '> .header')
         .down('logo', 'img').end()
