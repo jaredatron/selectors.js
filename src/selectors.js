@@ -59,6 +59,7 @@ function Selector(value){
 
         if (arguments.length === 2) {
           if (VALID_SELECTOR_NAME.test(name)); else throw 'invalid selector name "'+name+'"';
+          if (name in this.node.nodes) throw 'selector "'+name+'" already defined';
           this.node.nodes[name] = new Node(value);
           return new Selector(this, name, this);
         }
