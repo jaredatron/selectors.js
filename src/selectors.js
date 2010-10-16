@@ -22,9 +22,14 @@ function Selector(value){
   window.Selector.Node     = Node;
   window.Selector.prototype = Selector.prototype;
 
-  function Node(value){
-    this.value = value || '';
-    this.nodes = {};
+  function Node(value, superNode){
+    if (superNode){
+      this.value = superNode.value + value;
+      this.nodes = superNode.nodes
+    }else{
+      this.value = value || '';
+      this.nodes = {};
+    }
   }
   extend(Node.prototype, {
     toString: function(){
@@ -40,16 +45,14 @@ function Selector(value){
   })
 
   function Selector(parent, name, previous){
-    if (parent){
+    if (name instanceof Node){
+      this.node     = name;
+    }else{
       this.node     = parent.node.nodes[name];
       if (this.node instanceof Node); else throw 'selector "'+name+'" not found';
-      this.parent   = parent; // Selector
-      this.previous = previous;
-
-    // Handles root selector reference case
-    }else{
-      this.node     = name;
     }
+    this.parent   = parent;
+    this.previous = previous;
   }
   extend(Selector.prototype, {
     toString: function(){
@@ -112,6 +115,10 @@ function Selector(value){
 
     })(),
 
+
+    when: function(value){
+      return new Selector(this.parent, new Node(value, this.node), this);
+    },
 
     end: function(){
       return this.previous;
