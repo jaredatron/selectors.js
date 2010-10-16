@@ -44,11 +44,25 @@ var S, Selector;
     *   and who's properties/values are sub selectors
    **/
   function Selector(value, super_selector){
+    // if (typeof value === 'undefined') value = '';
+    // if (value instanceof String) value = String(value);
+    // if (typeof value !== 'string') throw new Error('Selector value must be a string');
+    // var selector = super_selector ? new Delegate(super_selector) : this;
+    // selector.toString = function toString(){ return value; };
+    // return selector;
+    var selector;
+    if (super_selector){
+      selector = new Delegate(super_selector)
+      selector.__selector__ = super_selector;
+      // console.trace();
+    }else
+      selector = this;
+
+    function toString(){ return value; }
+
     if (typeof value === 'undefined') value = '';
-    if (value instanceof String) value = String(value);
-    if (typeof value !== 'string') throw new Error('Selector value must be a string');
-    var selector = super_selector ? new Delegate(super_selector) : this;
-    selector.toString = function toString(){ return value; };
+    if (value instanceof String)      value = String(value);
+    selector.toString = typeof value === 'function' ? value : toString;
     return selector;
   }
   // Selector.prototype.toString = function toString(){ return '<Selector:"'+this.valueOf()+'">'; };
@@ -71,17 +85,23 @@ var S, Selector;
   function SelectorReference(selector, name, end){
     if (selector instanceof SelectorReference){
       if (name){
-        this.parentSelector = selector.clone();
+        if (selector.childSelectors.__selector__){
+          console.trace();
+        }
+          // this.parentSelector   = selector.clone();
+        // }else{
+          this.parentSelector   = selector.clone();
+        }
         if (name in selector.childSelectors && selector.childSelectors[name] instanceof Selector){
           this.childSelectors = selector.childSelectors[name];
           this.name           = name;
           this.end            = end || selector;
         }else throw new TypeError("'"+selector+"' has no child selectors named '"+name+"'");
       }else{
-        this.parentSelector = selector.parentSelector;
-        this.childSelectors = selector.childSelectors;
-        this.name           = selector.name;
-        this.end            = end || selector.end || selector.parentSelector;
+        this.parentSelector   = selector.parentSelector;
+        this.childSelectors   = selector.childSelectors;
+        this.name             = selector.name;
+        this.end              = end || selector.end || selector.parentSelector;
       }
     }else if (selector instanceof SelectorReference){
       this.childSelectors = selector;
@@ -120,6 +140,17 @@ var S, Selector;
     clone: function(){
       return new SelectorReference(this);
     },
+    
+    when: function(value){
+      var original = this,
+          clone    = this.clone();
+      function toString(){ return original.value() + value; }
+      clone.childSelectors = new Selector(toString, original.childSelectors);
+      // clone.originalSelector = originalSelector;
+      clone.end = this;
+      return clone;
+    },
+    
     //
     parentSelectors: function(){
       var selectors = [], selector = this.parentSelector;

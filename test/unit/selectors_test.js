@@ -265,6 +265,37 @@
     expect(clone.name           ).toEqual(content.name);
   });
 
+  test('selector.when', function(){
+    var body = Selector('body'), p, visible_p;
+    body
+      .def('p', 'p')
+        .def('link','a[href]').end
+      .end
+    ;
+    
+    p         = body.down('p');
+    visible_p = p.when(':visible');
+    
+    expect( p                     ).toNotBeTheSameSelectorAs( visible_p );
+    expect( visible_p.value()     ).toEqual('p:visible');
+    expect( visible_p.fullValue() ).toEqual('body p:visible');
+    expect(         p.down('link').value()     ).toEqual('a[href]');
+    expect( visible_p.down('link').value()     ).toEqual('a[href]');
+    expect(         p.down('link').fullValue() ).toEqual('body p a[href]');
+    expect( visible_p.down('link').fullValue() ).toEqual('body p:visible a[href]');
+    expect(         p.down('link').up('p')     ).toBeTheSameSelectorAs( p );
+    expect( visible_p.down('link').up('p')     ).toBeTheSameSelectorAs( p );
+
+
+    // expect(when_checked.value()      ).toEqual('input[type="checkbox"]:visible');
+    // expect(when_checked.fullValue()  ).toEqual('body input[type="checkbox"]:visible');
+    // expect(when_checked.up()         ).toBeTheSameSelectorAs( checkbox.up() );
+    // expect(when_checked.down()         ).toBeTheSameSelectorAs( checkbox.up() );
+    // expect(clone.childSelectors ).toBe(content.childSelectors);
+    // expect(clone.parentSelector ).toBe(content.parentSelector);
+    // expect(clone.name           ).toEqual(content.name);
+  });
+
   test("selector.audit()", function() {
     var selectors, audit;
 
