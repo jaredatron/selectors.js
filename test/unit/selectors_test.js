@@ -75,22 +75,22 @@
     expect( root.down('html body footer' ).end() ).toBeTheSameSelectorAs(root);
 
     html = root.down('html');
-    expect( html.down('body'        ).end() ).toBeTheSameSelectorAs(html);
-    expect( html.down('header'      ).end() ).toBeTheSameSelectorAs(html);
-    expect( html.down('content'     ).end() ).toBeTheSameSelectorAs(html);
-    expect( html.down('footer'      ).end() ).toBeTheSameSelectorAs(html);
-    expect( html.down('body'        ).end() ).toBeTheSameSelectorAs(html);
-    expect( html.down('header'      ).end() ).toBeTheSameSelectorAs(html);
-    expect( html.down('content'     ).end() ).toBeTheSameSelectorAs(html);
-    expect( html.down('footer'      ).end() ).toBeTheSameSelectorAs(html);
-    expect( html.down('body header' ).end() ).toBeTheSameSelectorAs(html);
-    expect( html.down('body content').end() ).toBeTheSameSelectorAs(html);
-    expect( html.down('body footer' ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('body'             ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('header'           ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('content'          ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('footer'           ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('body'             ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('header'           ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('content'          ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('footer'           ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('body header'      ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('body content'     ).end() ).toBeTheSameSelectorAs(html);
+    expect( html.down('body footer'      ).end() ).toBeTheSameSelectorAs(html);
 
     body = root.down('body');
-    expect( body.down('header'      ).end() ).toBeTheSameSelectorAs(body);
-    expect( body.down('content'     ).end() ).toBeTheSameSelectorAs(body);
-    expect( body.down('footer'      ).end() ).toBeTheSameSelectorAs(body);
+    expect( body.down('header'           ).end() ).toBeTheSameSelectorAs(body);
+    expect( body.down('content'          ).end() ).toBeTheSameSelectorAs(body);
+    expect( body.down('footer'           ).end() ).toBeTheSameSelectorAs(body);
 
   });
 
