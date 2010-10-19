@@ -254,10 +254,4 @@
     for (var p in extension) object[p] = extension[p];
   }
 
-  function create(object){
-    function constructor(){};
-    constructor.prototype = object;
-    return new constructor;
-  }
-
 })(this);
