@@ -202,7 +202,13 @@
     },
 
     when: function(value){
+      if (typeof value !== 'string') throw new TypeError('first argument to "when" must be a string');
       return new Selector(this.parent, new Partial(value, this.partial), this);
+    },
+
+    plus: function(value){
+      if (typeof value !== 'string') throw new TypeError('first argument to "plus" must be a string');
+      return new Selector(this.parent, new Partial(' '+value, this.partial), this);
     },
 
     end: function(){
