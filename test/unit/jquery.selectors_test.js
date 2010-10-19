@@ -7,7 +7,7 @@
   $('html body').append($(
     '<div class="content" style="display:none">'+
       '<div class="profile">'+
-        '<div class="content">'+
+        '<div class="content selected">'+
           '<img src=""/>'+
         '</div>'+
       '</div>'+
@@ -30,7 +30,10 @@
 
     expect( body_selector.get().toSelector()       ).toBeTheSameSelectorAs(body_selector);
     expect( body_selector.get()                    ).toReferenceTheSameHtmlElementsAs(body_collection);
-    // expect( body_selector.plus('> .content').get() ).toReferenceTheSameHtmlElementsAs(body_collection.find('> .content'));
+  });
+
+  test('Selector#plus', function(){
+    expect( S('body').plus('> .content').get() ).toReferenceTheSameHtmlElementsAs( $('body > .content') );
   });
 
   test("selector.bind", 5, function() {
@@ -73,9 +76,12 @@
     // Up
     expect( S('profile content').get().up()                       ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile') );
     expect( S('profile content').get().up('content')              ).toReferenceTheSameHtmlElementsAs( $('html body > .content')            );
+    expect( S('profile content').get().up('body')                 ).toReferenceTheSameHtmlElementsAs( $('html body')                       );
+    expect( S('profile content').get().up('html')                 ).toReferenceTheSameHtmlElementsAs( $('html     ')                       );
 
-    // Down with additional selector
-    // expect( S('profile content').get().up('body', 'a[href]')      ).toReferenceTheSameHtmlElementsAs( $('html body a[href]') );
+    // Up with selector addition
+    expect( S('profile content image').get().up('content', '.selected') ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile > .content.selected') );
+    expect( S('profile content image').get().up('content', '.never-is') ).toReferenceTheSameHtmlElementsAs( $() );
 
     // Down
     expect( S('html').get().down('content')                       ).toReferenceTheSameHtmlElementsAs( $('html body > .content')                       );
@@ -83,8 +89,10 @@
     expect( S('html').get().down('profile content')               ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile > .content') );
     expect( S('html').get().down('profile').down('content')       ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile > .content') );
 
-    // Down with additional selector
-    // expect( S('html').get().down('profile content', '> img')      ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile > .content > img') );
+    // Down with selector addition
+    expect( S('html').get().down('profile content', '.selected')  ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile > .content.selected') );
+    expect( S('html').get().down('profile content', '.never-is')  ).toReferenceTheSameHtmlElementsAs( $() );
+
 
     expect( S('profile content').get().up()                       ).toReferenceTheSameHtmlElementsAs( $('html body > .content > .profile') );
     expect( S('profile content').get().up().up()                  ).toReferenceTheSameHtmlElementsAs( $('html body > .content')            );
