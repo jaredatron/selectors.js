@@ -15,15 +15,20 @@
     from: function from(query){
       return this.toSelector().from(query);
     },
-    up: function up(query){
+    up: function up(query, when){
       var selector = this.toSelector().up(query);
-      return selector.fromjQuery(this.parents(selector.toString()));
+      if (when) selector = selector.when(when);
+      return selector.fromjQuery(
+        this.parents(selector.toString())
+      );
     },
-    down: function down(query){
+    down: function down(query, when){
       var self       = this.toSelector(),
-          selector   = self.down(query),
-          collection = this.find(selector.from(self).toString());
-      return selector.fromjQuery(collection);
+          selector   = self.down(query);
+      if (when) selector = selector.when(when);
+      return selector.fromjQuery(
+        this.find(selector.from(self).toString())
+      );
     }
   });
 
