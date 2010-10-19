@@ -1,11 +1,12 @@
 function Selector(value){
-  return new Selector.Selector(undefined, new Selector.Node(value));
+  return new Selector.Selector(new Selector.Node(value));
 }
 
 ;(function() {
 
   var SPACES                   = /\s*/,
       VALID_SELECTOR_NAME      = /^[a-z0-9_-]+$/i,
+      VALID_SELECTOR_QUERY     = /^[ a-z0-9_-]+$/i,
       SURROUNDING_WHITE_SPACE  = /(^\s*|\s*$)/g,
       NAME_REGEXP              = /{name}/g,
       SELECTOR_VALUE_SHORTHAND = {
@@ -44,15 +45,50 @@ function Selector(value){
     }
   })
 
+
+  /* A refernce to a Selector Node
+   * Usage:
+   *
+   *   new Selector( selector [Selector] )
+   *   - return a clone of the given selector
+   *
+   *   new Selector( root [Node] )
+   *   - returns a reference to a root Node
+   *
+   *   new Selector( parent [Selector], name [String], previous [Selector] )
+   *   - returns a reference to the parents child node named the given name
+   *
+   *   new Selector( parent [Selector], node [Node], previous [Selector] )
+   *   - returns a reference to a bastard child node of the given parent
+   *
+   */
   function Selector(parent, name, previous){
-    if (name instanceof Node){
-      this.node     = name;
+    if (parent instanceof Node){
+      this.node = parent;
+
     }else{
-      this.node     = parent.node.nodes[name];
-      if (this.node instanceof Node); else throw 'selector "'+name+'" not found';
+      if (name){
+        // create a reference to a bastard
+        if (name instanceof Node){
+          this.name     = null;
+          this.node     = name;
+
+        // create a reference to the node named...
+        }else{
+          this.name     = name;
+          this.node     = parent.node.nodes[name];
+          if (this.node instanceof Node); else throw 'selector "'+name+'" not found';
+        }
+        this.parent   = parent;
+        this.previous = previous;
+
+      // clone selector
+      }else{
+        this.parent = parent.parent;
+        this.name   = parent.name;
+        this.node   = parent.node;
+      }
     }
-    this.parent   = parent;
-    this.previous = previous;
   }
   extend(Selector.prototype, {
     toString: function(){
@@ -115,17 +151,57 @@ function Selector(value){
 
     })(),
 
+    up: (function() {
+
+      return function(query){
+        if (query); else return this.parent.clone();
+
+        if (VALID_SELECTOR_QUERY.test(query)); else throw 'invalid selector query "'+query+'"';
+
+        var name,
+            names = query.split(/\s+/),
+            matches = parentsNamed(names.pop(), this);
+
+        while(names.length){
+          name = names.pop();
+          matches = matches.filter(function(selector){
+            return parentsNamed(name, selector, true) === true
+          });
+        }
+
+        if (matches.length === 0) throw 'selector "'+query+'" not found';
+
+        return matches.shift().clone();
+      };
+
+      function parentsNamed(name, selector, first){
+        var parents = [], parent = selector.parent;
+        while(parent){
+          if (parent.name == name){
+            if (first) return true;
+            parents.push(parent);
+          }
+          parent = parent.parent;
+        }
+        return parents;
+      }
+
+    })(),
 
     when: function(value){
       return new Selector(this.parent, new Node(value, this.node), this);
     },
 
     end: function(){
-      return this.previous;
+      return this.previous || this;
     },
 
     tree: function(){
       return this.node.tree();
+    },
+
+    clone: function(){
+      return new Selector(this);
     }
   });
 
