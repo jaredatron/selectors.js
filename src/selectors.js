@@ -98,7 +98,7 @@
 
       return function(name, value){
         var selector;
-        if (name); else throw 'invalid selector name "'+name+'"';
+        if (name); else throw 'selector cannot be blank';
 
         if (arguments.length === 2) {
           if (VALID_SELECTOR_NAME.test(name)); else throw 'invalid selector name "'+name+'"';
@@ -183,6 +183,24 @@
 
     })(),
 
+    to: function(query){
+      var selector = (query instanceof Selector) ? query : this.down(query);
+
+      if (!selector.childOf(this)) throw '"'+selector+'" is not a child of "'+this+'"';
+
+      return (this.toString() === '') ?
+        selector.toString() :
+        selector.toString().replace(new RegExp('^'+this+' '), '')
+      ;
+    },
+
+    from: function(query){
+      if ('parent' in this); else throw 'from cannot be called on a root selector';
+      if (query); else throw 'selector cannot be blank';
+      if (query instanceof Selector) return query.to(this);
+      return this.up(query).to(this);
+    },
+
     when: function(value){
       return new Selector(this.parent, new Partial(value, this.partial), this);
     },
@@ -197,6 +215,16 @@
 
     clone: function(){
       return new Selector(this);
+    },
+
+    childOf: function(parent){
+      if (parent instanceof Selector); else return false;
+      var selector = this;
+      while(selector){
+        if (parent.partial === selector.partial) return true;
+        selector = selector.parent;
+      }
+      return false;
     }
   });
 
