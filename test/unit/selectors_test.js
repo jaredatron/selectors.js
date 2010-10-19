@@ -104,6 +104,71 @@
 
   });
 
+  test('Selector#to', function(){
+    var root = Selector();
+        a    = root.down('a','.a');
+        b    =    a.down('b','.b');
+        c    =    b.down('c','.c');
+        d    =    c.down('d','.d');
+
+    expect(function(){ root.to(); }).toThrow('selector cannot be blank');
+
+    expect( root.to('a') ).toBe('.a');
+    expect( root.to('b') ).toBe('.a .b');
+    expect( root.to('c') ).toBe('.a .b .c');
+    expect( root.to('d') ).toBe('.a .b .c .d');
+
+    expect( a.to('b') ).toBe('.b');
+    expect( a.to('c') ).toBe('.b .c');
+    expect( a.to('d') ).toBe('.b .c .d');
+
+    expect( b.to('c') ).toBe('.c');
+    expect( b.to('d') ).toBe('.c .d');
+
+    expect( c.to('d') ).toBe('.d');
+
+
+    expect( root.to( a ) ).toBe('.a');
+    expect( root.to( b ) ).toBe('.a .b');
+    expect( root.to( c ) ).toBe('.a .b .c');
+    expect( root.to( d ) ).toBe('.a .b .c .d');
+
+    expect( a.to( b ) ).toBe('.b');
+    expect( a.to( c ) ).toBe('.b .c');
+    expect( a.to( d ) ).toBe('.b .c .d');
+
+    expect( b.to( c ) ).toBe('.c');
+    expect( b.to( d ) ).toBe('.c .d');
+
+    expect( c.to( d ) ).toBe('.d');
+
+  });
+
+  test('Selector#from', function(){
+    var root = Selector();
+        a    = root.down('a','.a');
+        b    =    a.down('b','.b');
+        c    =    b.down('c','.c');
+        d    =    c.down('d','.d');
+
+    expect(function(){ root.from(); }).toThrow('from cannot be called on a root selector');
+    expect(function(){ d.from(); }).toThrow('selector cannot be blank');
+
+    expect( d.from('a') ).toBe('.b .c .d');
+    expect( d.from('b') ).toBe('.c .d');
+    expect( d.from('c') ).toBe('.d');
+
+    expect( c.from('b') ).toBe('.c');
+    expect( c.from('a') ).toBe('.b .c');
+
+    expect( d.from( a ) ).toBe('.b .c .d');
+    expect( d.from( b ) ).toBe('.c .d');
+    expect( d.from( c ) ).toBe('.d');
+
+    expect( c.from( b ) ).toBe('.c');
+    expect( c.from( a ) ).toBe('.b .c');
+  });
+
   test('Selector#end', function(){
     var root = Selector(), html, body;
 
@@ -182,6 +247,26 @@
          }
        }
      });
+
+  });
+
+  test('Selector#clone', function(){
+    var selector = Selector();
+    expect(selector.clone()).toNotBe(selector).toBeTheSameSelectorAs(selector);
+  });
+
+  test('Selector#childOf', function(){
+    var god        = Selector('god'),
+        parent     = god.down('parent','.'),
+        child      = parent.down('child','.'),
+        grandChild = child.down('grand-child','.'),
+        brother    = god.down('brother','.'),
+        stranger   = Selector('stranger');
+
+    expect(      child.childOf(parent) ).toBe(true);
+    expect( grandChild.childOf(parent) ).toBe(true);
+    expect(    brother.childOf(parent) ).toBe(false);
+    expect(   stranger.childOf(parent) ).toBe(false);
 
   });
 
