@@ -25,6 +25,8 @@
       this.value = value || '';
       this.partials = {};
     }
+    this.value = this.value.replace(/(^\s*|\s*$)/g,'');
+    if (/,/.test(this.value)) throw 'invalide partial selector value "'+this.value+'"';
   }
   extend(Partial.prototype, {
     toString: function(){

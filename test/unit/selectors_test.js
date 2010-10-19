@@ -31,7 +31,15 @@
     .end();
 
 
-    expect( Selector().down('a','a').toString() ).toBe('a');
+    expect(function(){ body.down('%', '.'); }).toThrow('invalid selector name "%"');
+    expect(function(){ body.down('two words', '.'); }).toThrow('invalid selector name "two words"');
+
+    expect(function(){
+      body.down('double', '> .double');
+      body.down('double', '> .double');
+    }).toThrow('selector "double" already defined');
+
+    expect( Selector().down('a',' a ').toString() ).toBe('a');
 
     expect( body.down('content', '#content').toString() ).toBe('body #content');
     expect( body.down('content'            ).toString() ).toBe('body #content');
@@ -39,10 +47,7 @@
     expect(function(){ body.down('bad name', 'bad.name'); }).toThrow('invalid selector name "bad name"');
     expect(function(){ body.down('nonexistant');          }).toThrow('selector "nonexistant" not found');
 
-    expect(function(){
-      body.down('double', '> .double');
-      body.down('double', '> .double');
-    }).toThrow('selector "double" already defined');
+
 
     expect( body.down('header'      ).toString() ).toBe('body > .header');
     expect( body.down('logo'        ).toString() ).toBe('body > .header img');
