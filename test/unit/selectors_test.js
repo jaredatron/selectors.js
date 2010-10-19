@@ -224,9 +224,22 @@
       .down('a', 'a')
         .down('span', 'span');
 
-    expect( root.down('a').down('span').toString()                      ).toBe('html a span');
+    expect(function(){ root.when(); }).toThrow('first argument to "when" must be a string');
+
     expect( root.down('a').when(':hover').down('span').toString()       ).toBe('html a:hover span');
-    expect( root.down('a').when(':hover').down('span').end().toString() ).toBe( root.down('a').when(':hover').toString() );
+    expect( root.down('a').when(':hover').down('span').end().toString() ).toBe('html a:hover');
+
+  });
+
+  test('Selector#plus', function(){
+
+    var root = Selector('html');
+    root.down('a', 'a');
+
+    expect(function(){ root.plus(); }).toThrow('first argument to "plus" must be a string');
+
+    expect( root.down('a').plus('span').toString()       ).toBe('html a span');
+    expect( root.down('a').plus('span').end().toString() ).toBe('html a');
 
   });
 
