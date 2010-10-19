@@ -285,4 +285,17 @@
 
   });
 
+  test('selectors with commas', function(){
+    var root = Selector();
+    root
+      .down('buttons', 'a, input')
+        .down('text', 'span');
+
+    expect( root.down('buttons').toString()                               ).toBe('a, input');
+    expect( root.down('buttons').when(':visible').toString()              ).toBe('a:visible, input:visible');
+    expect( root.down('buttons').down('text').toString()                  ).toBe('a span, input span');
+    expect( root.down('buttons').down('text').when(':visible').toString() ).toBe('a span:visible, input span:visible');
+
+  });
+
 })();

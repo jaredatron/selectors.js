@@ -3,6 +3,7 @@
   var _Selector                = window.Selector,
       _S                       = window.S,
       SPACES                   = /\s*/,
+      COMMA                    = /\s*,\s*/,
       VALID_SELECTOR_NAME      = /^[a-z0-9_-]+$/i,
       VALID_SELECTOR_QUERY     = /^[ a-z0-9_-]+$/i,
       SURROUNDING_WHITE_SPACE  = /(^\s*|\s*$)/g,
@@ -15,18 +16,18 @@
         '>.'  :'> .{name}',
         '>#'  :'> #{name}',
         '>[]' :'> [{name}]'
-      };
+      },
+      LEADING_AND_TRAILING_WHITE_SPACE = /(^\s*|\s*$)/g;
 
   function Partial(value, superPartial){
     if (superPartial){
-      this.value = superPartial.value + value;
+      this.value = value || '';
       this.partials = superPartial.partials;
     }else{
       this.value = value || '';
       this.partials = {};
     }
-    this.value = this.value.replace(/(^\s*|\s*$)/g,'');
-    if (/,/.test(this.value)) throw 'invalide partial selector value "'+this.value+'"';
+    this.value = strip(this.value);
   }
   extend(Partial.prototype, {
     toString: function(){
@@ -88,12 +89,13 @@
   }
   extend(Selector.prototype, {
     toString: function(){
-      if (this.parent){
-        var parentValue = this.parent.toString();
-        return parentValue ? parentValue+' '+this.partial.value : this.partial.value;
-      }else{
-        return this.partial.value;
-      }
+      var value = this.partial.value, parentValues;
+      if (this.parent); else return this.partial.value;
+      return joinSelectors(this.parent.toString(), this.partial.value);
+
+      // parentValues = this.parent.toString().split(/\s*,\s*/);
+      // if (parentValues.length === 0 || (parentValues.length === 1 && parentValues[0] === "")) return value;
+      // return parentValues.map(function(parentValue){ return parentValue+' '+value }).join(', ');
     },
 
     down: (function() {
@@ -205,12 +207,14 @@
 
     when: function(value){
       if (typeof value !== 'string') throw new TypeError('first argument to "when" must be a string');
-      return new Selector(this.parent, new Partial(value, this.partial), this);
+      var newValue = joinSelectors(this.partial.value, value, true);
+      return new Selector(this.parent, new Partial(newValue, this.partial), this);
     },
 
     plus: function(value){
       if (typeof value !== 'string') throw new TypeError('first argument to "plus" must be a string');
-      return new Selector(this.parent, new Partial(' '+value, this.partial), this);
+      var newValue = joinSelectors(this.partial.value, value, false);
+      return new Selector(this.parent, new Partial(newValue, this.partial), this);
     },
 
     end: function(){
@@ -260,6 +264,26 @@
 
   function extend(object, extension){
     for (var p in extension) object[p] = extension[p];
+  }
+
+  function strip(string){
+    return string.replace(LEADING_AND_TRAILING_WHITE_SPACE,'');
+  }
+
+  function joinSelectors(parent, child, noSpace){
+    if (parent); else return child;
+    var parentValues = parent.split(COMMA).map(strip),
+        childValues  =  child.split(COMMA).map(strip),
+        values       = [],
+        space        = noSpace ? '' : ' ';
+
+    parentValues.forEach(function(left){
+      childValues.forEach(function(right){
+        values.push(left+space+right);
+      });
+    });
+
+    return values.join(', ');
   }
 
 })(this);
