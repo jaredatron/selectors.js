@@ -1,10 +1,8 @@
-function Selector(value){
-  return new Selector.Selector(new Selector.Node(value));
-}
+;(function(window, undefined) {
 
-;(function() {
-
-  var SPACES                   = /\s*/,
+  var _Selector                = window.Selector,
+      _S                       = window.S,
+      SPACES                   = /\s*/,
       VALID_SELECTOR_NAME      = /^[a-z0-9_-]+$/i,
       VALID_SELECTOR_QUERY     = /^[ a-z0-9_-]+$/i,
       SURROUNDING_WHITE_SPACE  = /(^\s*|\s*$)/g,
@@ -19,65 +17,61 @@ function Selector(value){
         '>[]' :'> [{name}]'
       };
 
-  window.Selector.Selector = Selector;
-  window.Selector.Node     = Node;
-  window.Selector.prototype = Selector.prototype;
-
-  function Node(value, superNode){
-    if (superNode){
-      this.value = superNode.value + value;
-      this.nodes = superNode.nodes
+  function Partial(value, superPartial){
+    if (superPartial){
+      this.value = superPartial.value + value;
+      this.partials = superPartial.partials;
     }else{
       this.value = value || '';
-      this.nodes = {};
+      this.partials = {};
     }
   }
-  extend(Node.prototype, {
+  extend(Partial.prototype, {
     toString: function(){
-      return '<Node: "'+this.value+'">';
+      return this.value;
     },
     tree: function(){
       var tree  = {},
-          nodes = this.nodes
+          partials = this.partials,
           name;
-      for (name in nodes) tree[name+' "'+nodes[name].value+'"'] = nodes[name].tree();
+      for (name in partials) tree[name+' "'+partials[name].value+'"'] = partials[name].tree();
       return tree;
     }
-  })
+  });
 
 
-  /* A refernce to a Selector Node
+  /* A refernce to a Selector Partial
    * Usage:
    *
    *   new Selector( selector [Selector] )
    *   - return a clone of the given selector
    *
-   *   new Selector( root [Node] )
-   *   - returns a reference to a root Node
+   *   new Selector( root [Partial] )
+   *   - returns a reference to a root Partial
    *
    *   new Selector( parent [Selector], name [String], previous [Selector] )
-   *   - returns a reference to the parents child node named the given name
+   *   - returns a reference to the parents child partial named the given name
    *
-   *   new Selector( parent [Selector], node [Node], previous [Selector] )
-   *   - returns a reference to a bastard child node of the given parent
+   *   new Selector( parent [Selector], partial [Partial], previous [Selector] )
+   *   - returns a reference to a bastard child partial of the given parent
    *
    */
   function Selector(parent, name, previous){
-    if (parent instanceof Node){
-      this.node = parent;
+    if (parent instanceof Partial){
+      this.partial = parent;
 
     }else{
       if (name){
         // create a reference to a bastard
-        if (name instanceof Node){
+        if (name instanceof Partial){
           this.name     = null;
-          this.node     = name;
+          this.partial     = name;
 
-        // create a reference to the node named...
+        // create a reference to the partial named...
         }else{
           this.name     = name;
-          this.node     = parent.node.nodes[name];
-          if (this.node instanceof Node); else throw 'selector "'+name+'" not found';
+          this.partial     = parent.partial.partials[name];
+          if (this.partial instanceof Partial); else throw 'selector "'+name+'" not found';
         }
         this.parent   = parent;
         this.previous = previous;
@@ -86,7 +80,7 @@ function Selector(value){
       }else{
         this.parent = parent.parent;
         this.name   = parent.name;
-        this.node   = parent.node;
+        this.partial   = parent.partial;
       }
     }
   }
@@ -94,9 +88,9 @@ function Selector(value){
     toString: function(){
       if (this.parent){
         var parentValue = this.parent.toString();
-        return parentValue ? parentValue+' '+this.node.value : this.node.value;
+        return parentValue ? parentValue+' '+this.partial.value : this.partial.value;
       }else{
-        return this.node.value;
+        return this.partial.value;
       }
     },
 
@@ -108,13 +102,13 @@ function Selector(value){
 
         if (arguments.length === 2) {
           if (VALID_SELECTOR_NAME.test(name)); else throw 'invalid selector name "'+name+'"';
-          if (name in this.node.nodes) throw 'selector "'+name+'" already defined';
+          if (name in this.partial.partials) throw 'selector "'+name+'" already defined';
 
           value = value.replace(SPACES,'');
           if (value in SELECTOR_VALUE_SHORTHAND) value = SELECTOR_VALUE_SHORTHAND[value];
           value = value.replace(NAME_REGEXP, name);
 
-          this.node.nodes[name] = new Node(value);
+          this.partial.partials[name] = new Partial(value);
           return new Selector(this, name, this);
         }
 
@@ -122,7 +116,7 @@ function Selector(value){
         if (selector); else throw new Error('selector "'+name+'" not found');
         selector.previous = this;
         return selector;
-      }
+      };
 
       function findShallowest(name, selector){
         var names = name.replace(SURROUNDING_WHITE_SPACE,'').split(/\s+/), selectors = [selector];
@@ -133,8 +127,9 @@ function Selector(value){
       function findAll(name, selectors, returnFirstMatch){
         var selector, n, matches = [], childSelector, childSelectors = [];
 
-        while(selector = selectors.shift()){
-          for (n in selector.node.nodes){
+        while(selectors.length){
+          selector = selectors.shift();
+          for (n in selector.partial.partials){
             childSelector = new Selector(selector, n);
             childSelectors.push(childSelector);
             if (n === name) {
@@ -165,7 +160,7 @@ function Selector(value){
         while(names.length){
           name = names.pop();
           matches = matches.filter(function(selector){
-            return parentsNamed(name, selector, true) === true
+            return parentsNamed(name, selector, true) === true;
           });
         }
 
@@ -189,7 +184,7 @@ function Selector(value){
     })(),
 
     when: function(value){
-      return new Selector(this.parent, new Node(value, this.node), this);
+      return new Selector(this.parent, new Partial(value, this.partial), this);
     },
 
     end: function(){
@@ -197,13 +192,31 @@ function Selector(value){
     },
 
     tree: function(){
-      return this.node.tree();
+      return this.partial.tree();
     },
 
     clone: function(){
       return new Selector(this);
     }
   });
+
+
+  function RootSelector(value){
+    return new Selector(new Partial(value));
+  }
+
+  window.Selector = function Selector(value){
+    return new RootSelector(value);
+  };
+  window.Selector.prototype = Selector.prototype;
+
+  function S(){
+    return S.root.down.apply(S.root, arguments);
+  };
+  S.root = window.Selector();
+  S('html','html').down('body','body');
+  window.S = S;
+
 
 
 
@@ -219,4 +232,4 @@ function Selector(value){
     return new constructor;
   }
 
-})();
+})(this);
