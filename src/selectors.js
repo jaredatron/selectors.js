@@ -19,15 +19,9 @@
       },
       LEADING_AND_TRAILING_WHITE_SPACE = /(^\s*|\s*$)/g;
 
-  function Partial(value, superPartial){
-    if (superPartial){
-      this.value = value || '';
-      this.partials = superPartial.partials;
-    }else{
-      this.value = value || '';
-      this.partials = {};
-    }
-    this.value = strip(this.value);
+  function Partial(value){
+    this.value = strip(value || '');
+    this.partials = {};
   }
   extend(Partial.prototype, {
     toString: function(){
@@ -39,6 +33,11 @@
           name;
       for (name in partials) tree[name+' "'+partials[name].value+'"'] = partials[name].tree();
       return tree;
+    },
+    clone: function(value){
+      var clone = new Partial(value);
+      clone.partials = this.partials;
+      return clone;
     }
   });
 
@@ -159,7 +158,8 @@
 
         var name,
             names = query.split(/\s+/),
-            matches = parentsNamed(names.pop(), this);
+            matches = parentsNamed(names.pop(), this),
+            match;
 
         while(names.length){
           name = names.pop();
@@ -170,7 +170,9 @@
 
         if (matches.length === 0) throw 'selector "'+query+'" not found';
 
-        return matches.shift().clone();
+        match = matches.shift().clone();
+        match.previous = this;
+        return match;
       };
 
       function parentsNamed(name, selector, first){
@@ -207,14 +209,20 @@
 
     when: function(value){
       if (typeof value !== 'string') throw new TypeError('first argument to "when" must be a string');
-      var newValue = joinSelectors(this.partial.value, value, true);
-      return new Selector(this.parent, new Partial(newValue, this.partial), this);
+      var newValue = joinSelectors(this.partial.value, value, true),
+          selector = this.clone();
+      selector.partial = this.partial.clone(newValue);
+      selector.previous = this;
+      return selector;
     },
 
     plus: function(value){
       if (typeof value !== 'string') throw new TypeError('first argument to "plus" must be a string');
-      var newValue = joinSelectors(this.partial.value, value, false);
-      return new Selector(this.parent, new Partial(newValue, this.partial), this);
+      var newValue = joinSelectors(this.partial.value, value, false),
+          selector = this.clone();
+      selector.partial = this.partial.clone(newValue);
+      selector.previous = this;
+      return selector;
     },
 
     end: function(){

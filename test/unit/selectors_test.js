@@ -58,15 +58,20 @@
     expect( body.down('header').up() ).toNotBe(body).toBeTheSameSelectorAs(body);
     expect( header.down('logo').up('header') ).toNotBe(header).toBeTheSameSelectorAs(header);
 
+    expect( body.down('header'      ).end().toString() ).toBe('body');
+    expect( body.down('logo'        ).end().toString() ).toBe('body');
+    expect( body.down('a'           ).end().toString() ).toBe('body');
+    expect( body.down('header logo' ).end().toString() ).toBe('body');
+    expect( body.down('header a'    ).end().toString() ).toBe('body');
   });
 
   test("Selector#up", function(){
     var root = Selector(),
         bottom = root
-          .down('a','.a').down('b','.b').down('c','.c')
-          .down('z','.z')
-          .down('a','.a').down('b','.b').down('c','.c')
-          .down('bottom', '.bottom'),
+          .down('a','.').down('b','.').down('c','.')
+          .down('z','.')
+          .down('a','.').down('b','.').down('c','.')
+          .down('bottom', '.'),
         z = root.down('z');
 
     expect(function(){ bottom.up('l m n'); }).toThrow('selector "l m n" not found');
@@ -82,6 +87,10 @@
     expect( bottom.up('a b c'        ).toString() ).toBe('.a .b .c .z .a .b .c');
     expect( bottom.up('a b'          ).toString() ).toBe('.a .b .c .z .a .b'   );
     expect( bottom.up('a'            ).toString() ).toBe('.a .b .c .z .a'      );
+
+    expect( bottom.up('c').end().toString()                   ).toBe('.a .b .c .z .a .b .c .bottom');
+    expect( bottom.up('c').up('b').end().toString()           ).toBe('.a .b .c .z .a .b .c');
+    expect( bottom.up('c').up('b').up('a').end().toString()   ).toBe('.a .b .c .z .a .b');
 
   });
 
@@ -223,25 +232,40 @@
 
     var root = Selector('html');
     root
-      .down('a', 'a')
-        .down('span', 'span');
+      .down('a', '.')
+        .down('b', '.');
 
     expect(function(){ root.when(); }).toThrow('first argument to "when" must be a string');
 
-    expect( root.down('a').when(':hover').down('span').toString()       ).toBe('html a:hover span');
-    expect( root.down('a').when(':hover').down('span').end().toString() ).toBe('html a:hover');
+    expect( root.down('a').when(':visible').toString()                         ).toBe('html .a:visible'   );
+    expect( root.down('a').when(':visible').end().toString()                   ).toBe('html .a'           );
+    expect( root.down('a').when(':visible').down('b').toString()               ).toBe('html .a:visible .b');
+    expect( root.down('a').when(':visible').down('b').end().toString()         ).toBe('html .a:visible'   );
+
+    expect( root.down('a').when(':visible').down('b').up('a').toString()       ).toBe('html .a:visible'   );
+    expect( root.down('a').when(':visible').down('b').up('a').end().toString() ).toBe('html .a:visible .b');
+    expect( root.down('a').when(':visible').down('b').end().toString()         ).toBe('html .a:visible'   );
+    expect( root.down('a').when(':visible').down('b').end().end().toString()   ).toBe('html .a'           );
 
   });
 
   test('Selector#plus', function(){
 
     var root = Selector('html');
-    root.down('a', 'a');
+    root
+      .down('a', '.')
+        .down('b', '.');
 
     expect(function(){ root.plus(); }).toThrow('first argument to "plus" must be a string');
 
-    expect( root.down('a').plus('span').toString()       ).toBe('html a span');
-    expect( root.down('a').plus('span').end().toString() ).toBe('html a');
+    expect( root.down('a').plus('span').toString()                        ).toBe('html .a span');
+    expect( root.down('a').plus('span').end().toString()                  ).toBe('html .a');
+    expect( root.down('a').plus('span').down('b').toString()              ).toBe('html .a span .b');
+    expect( root.down('a').plus('span').down('b').up('a').toString()      ).toBe('html .a span');
+    expect( root.down('a').plus('span').down('b').up('a').up().toString() ).toBe('html');
+
+    expect( root.down('a').plus('span').down('b').end().toString()        ).toBe('html .a span');
+    expect( root.down('a').plus('span').down('b').end().end().toString()  ).toBe('html .a'     );
 
   });
 
