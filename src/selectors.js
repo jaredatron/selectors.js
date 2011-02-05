@@ -111,6 +111,7 @@
    *
    */
   function Selector(parent, name, previous){
+    if (arguments.length === 0) return this;
     if (parent instanceof Partial){
       this.partial = parent;
 
@@ -315,8 +316,9 @@
 
 
   function RootSelector(value){
-    return new Selector(new Partial(value));
+    this.partial = new Partial(value);
   }
+  RootSelector.prototype = new Selector;
 
   window.Selector = function Selector(value){
     return new RootSelector(value);
@@ -324,6 +326,7 @@
   window.Selector.prototype = Selector.prototype;
   window.Selector.Partial = Partial;
   window.Selector.Selector = Selector;
+  window.Selector.RootSelector = RootSelector;
 
   ROOT_SELECTOR = window.Selector();
   function S(name){
