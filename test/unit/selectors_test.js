@@ -1,5 +1,4 @@
-;(function() {
-  var undefined;
+;(function(undefined) {
 
   module("Selector");
 
@@ -7,10 +6,7 @@
     expect( Selector().toString()            ).toBe('');
     expect( Selector('').toString()          ).toBe('');
     expect( Selector('html body').toString() ).toBe('html body');
-
-
     expect( Selector('html body').toString() ).toBe('html body');
-
   });
 
   test('Selector#name', function(){
