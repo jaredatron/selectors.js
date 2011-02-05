@@ -1,6 +1,6 @@
 ;(function(jQuery, Selector) {
 
-  if (!jQuery)   throw new Error('jquery.selectors.js requires jQuery 1.4.2 or later');
+  if (!jQuery)   throw new Error('jquery.selectors.js requires jQuery 1.5 or later');
   if (!Selector) throw new Error('jquery.selectors.js requires Selectors 0.1 or later');
 
   var DOCUMENT = $(document);
@@ -18,30 +18,33 @@
     up: function up(query, when){
       var selector = this.toSelector().up(query);
       if (when) selector = selector.when(when);
-      return selector.fromjQuery(
-        this.parents(selector.toString())
-      );
+      return selector.jQuery(this.parents(selector.toString()));
     },
     down: function down(query, when){
       var self       = this.toSelector(),
           selector   = self.down(query);
       if (when) selector = selector.when(when);
-      return selector.fromjQuery(
-        this.find(selector.from(self).toString())
-      );
+      return selector.jQuery(this.find(selector.from(self).toString()));
     }
   });
 
   jQuery.extend(Selector.prototype, {
-    fromjQuery: function(collection){
-      var selector = this;
-      selector.extend();
-      collection = jQuery.merge(create(selector.partial.prototype), jQuery(collection));
-      collection.toSelector = function toSelector(){ return selector; };
-      return collection;
+    jQuery: function jQuerySubclassWrapper(){
+      var
+        selector = this,
+        sub      = selector.partial.jQuery;
+
+      if (!sub){
+        sub = selector.partial.jQuery = jQuery.sub();
+        sub.fn.toSelector = function toSelector(){
+          return selector.clone();
+        };
+      }
+
+      return sub.apply(this, arguments);
     },
     get: function(){
-      return this.fromjQuery(jQuery(this.toString()));
+      return this.jQuery(this.toString());
     },
     bind: function(types, data, fn){
       var selector = this, type;
@@ -52,7 +55,7 @@
 
       if (typeof types === 'string'){
         DOCUMENT.delegate(this.toString(), types, data, function(){
-          return fn.apply(selector.fromjQuery(this), arguments);
+          return fn.apply(selector.jQuery(this), arguments);
         });
       }else{
         for (type in types) this.bind(type, undefined, types[type]);
@@ -61,8 +64,7 @@
       return this;
     },
     extend: function(extension){
-      this.partial.prototype || (this.partial.prototype = jQuery([]));
-      if (extension) this.partial.prototype.extend(extension);
+      if (extension) this.jQuery().constructor.fn.extend(extension);
       return this;
     }
   });

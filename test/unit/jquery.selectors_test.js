@@ -1,6 +1,7 @@
-;(function() {
+;(function($, undefined) {
 
-  var undefined, events = $(document).delegate('a','a',function(){}).data().events.live = []; events.length = 0;
+  var events = $(document).delegate('a','a',function(){}).data()[jQuery.expando].events.live = [];
+  events.length = 0;
 
   module("Selector");
 
@@ -115,4 +116,4 @@
   });
 
 
-})();
+})(jQuery);
