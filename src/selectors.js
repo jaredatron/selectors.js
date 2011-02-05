@@ -257,6 +257,8 @@
     return new RootSelector(value);
   };
   window.Selector.prototype = Selector.prototype;
+  window.Selector.Partial = Partial;
+  window.Selector.Selector = Selector;
 
   function S(){
     return S.root.down.apply(S.root, arguments);
