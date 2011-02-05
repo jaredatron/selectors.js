@@ -9,6 +9,22 @@
     expect( Selector('html body').toString() ).toBe('html body');
   });
 
+  test('S', function(){
+    var default_partials = S().partial.partials;
+    S().partial.partials = {};
+
+    expect( S().toString()                       ).toEqual('');
+    expect( S().tree().toString()                ).toEqual('');
+    expect( S().down('html','').toString()       ).toEqual('html');
+    expect( S('html').toString()                 ).toEqual('html');
+    expect( S().tree().toString()                ).toEqual('html : html');
+    expect( S('html').down('head','').toString() ).toEqual('html head');
+    expect( S('head').toString()                 ).toEqual('html head');
+    expect( S().tree().toString()                ).toEqual('html : html\nhead : html head');
+
+    S().partial.partials = default_partials;
+  });
+
   test('Selector#name', function(){
     expect( Selector().down('steve','steve').name ).toBe('steve');
   });
@@ -98,7 +114,8 @@
     // expect( root.down('header','>.').toString() ).toBe('> .header');
 
 
-    [ ['.'  , '.name'   ],
+    [ [''   , 'name'    ],
+      ['.'  , '.name'   ],
       ['#'  , '#name'   ],
       ['[]' , '[name]'  ],
       ['>'  , '> name'  ],

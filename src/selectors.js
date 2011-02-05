@@ -9,6 +9,7 @@
       SURROUNDING_WHITE_SPACE  = /^[\s\n]*|[\s\n]*$/g,
       NAME_REGEXP              = /{name}/g,
       SELECTOR_VALUE_SHORTHAND = {
+        ''    :'{name}',
         '.'   :'.{name}',
         '#'   :'#{name}',
         '[]'  :'[{name}]',
@@ -16,7 +17,8 @@
         '>.'  :'> .{name}',
         '>#'  :'> #{name}',
         '>[]' :'> [{name}]'
-      };
+      },
+      ROOT_SELECTOR;
 
   function Partial(value){
     this.value = strip(value || '');
@@ -154,6 +156,7 @@
         if (name); else throw 'selector cannot be blank';
 
         if (arguments.length === 2) {
+          value = String(value);
           if (VALID_SELECTOR_NAME.test(name)); else throw 'invalid selector name "'+name+'"';
           if (name in this.partial.partials) throw 'selector "'+name+'" already defined';
 
@@ -322,11 +325,11 @@
   window.Selector.Partial = Partial;
   window.Selector.Selector = Selector;
 
-  function S(){
-    return S.root.down.apply(S.root, arguments);
+  ROOT_SELECTOR = window.Selector();
+  function S(name){
+    return arguments.length ? ROOT_SELECTOR.down(name) : ROOT_SELECTOR;
   };
-  S.root = window.Selector();
-  S('html','html').down('body','body');
+  S().down('html','html').down('body','body');
   window.S = S;
 
 
