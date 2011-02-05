@@ -37,12 +37,15 @@
     expect( S('body').plus('> .content').get() ).toReferenceTheSameHtmlElementsAs( $('body > .content') );
   });
 
-  test("selector.bind", 5, function() {
+  test("selector.bind", 6, function() {
     var data, handler;
 
     data = {};
     handler = function(event, data){
-      expect(this).toBeAnInstanceOf(jQuery).toReferenceTheSameHtmlElementsAs($('body'));
+      expect(this)
+        .toBeAnInstanceOf(jQuery)
+        .toReferenceTheSameHtmlElementsAs($('body'));
+      expect(data).toBe(data);
     };
     S('body').bind('click', data, handler);
     expect(events[0].selector).toEqual('html body');
@@ -53,16 +56,21 @@
     events.length = 0;
   });
 
-  test('selector.extend', 2, function(){
-    S('profile')
-      .extend({
-        addFriend: function(){}
-      })
-    ;
+  test('selector.extend', 4, function(){
 
-    expect( S('profile').get().addFriend ).toBeA(Function);
+    function addFriend(){
+      return this;
+    }
 
-    S('profile').click(function(){ expect(this.addFriend).toBeA(Function); }).get().click();
+    S('profile').extend({addFriend: addFriend});
+
+    expect( S('profile').get().addFriend   ).toBe(addFriend);
+    expect( S('profile').get().addFriend() ).toBeAnInstanceOf(S('profile').get().constructor);
+
+    S('profile').click(function(){
+      expect(this.addFriend).toBe(addFriend);
+      expect(this.addFriend()).toBe(this);
+    }).get().click();
   });
 
   module("jQuery");
