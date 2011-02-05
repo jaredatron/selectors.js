@@ -6,7 +6,7 @@
       COMMA                    = /\s*,\s*/,
       VALID_SELECTOR_NAME      = /^[a-z0-9_-]+$/i,
       VALID_SELECTOR_QUERY     = /^[ a-z0-9_-]+$/i,
-      SURROUNDING_WHITE_SPACE  = /(^\s*|\s*$)/g,
+      SURROUNDING_WHITE_SPACE  = /^[\s\n]*|[\s\n]*$/g,
       NAME_REGEXP              = /{name}/g,
       SELECTOR_VALUE_SHORTHAND = {
         '.'   :'.{name}',
@@ -16,8 +16,7 @@
         '>.'  :'> .{name}',
         '>#'  :'> #{name}',
         '>[]' :'> [{name}]'
-      },
-      LEADING_AND_TRAILING_WHITE_SPACE = /(^\s*|\s*$)/g;
+      };
 
   function Partial(value){
     this.value = strip(value || '');
@@ -27,13 +26,64 @@
     toString: function(){
       return this.value;
     },
-    tree: function(){
-      var tree  = {},
-          partials = this.partials,
+    tree: (function() {
+
+      function tree(nested){
+        var
+          partial  = this,
+          partials = partial.partials,
+          tree     = {},
+          subtree  = (!nested && partial.value) ? tree['`'+partial.value+'`'] = {} : tree,
           name;
-      for (name in partials) tree[name+' "'+partials[name].value+'"'] = partials[name].tree();
+
+        for (name in partials)
+          subtree[name+' `'+partials[name].value+'`'] = partials[name].tree(true);
+
+        if (!nested) tree.toString = function toString(){ return treeToString(null, partial); };
+
+        return tree;
+      }
+
+      function treeToString(name, partial, prefix){
+        var
+          root      = name === null,
+          value     = root || !prefix ? partial.toString() : prefix+' '+partial.toString(),
+          names     = [name||''],
+          selectors = [value],
+          partials  = partial.partials,
+          data, string, i;
+
+        for (name in partials) {
+          data = treeToString(name, partials[name], value);
+          names = names.concat(data[0]);
+          selectors = selectors.concat(data[1]);
+        }
+
+        return root ? dataToString(names, selectors) : [names, selectors];
+      }
+
+      function dataToString(names, selectors){
+        var
+          string = [],
+          length = 0,
+          name, i, l;
+
+        for (i=0; i < names.length; i++) {
+          l = names[i].length;
+          length = l > length ? l : length;
+        }
+
+        for (i=0; i < names.length; i++) {
+          name = names[i];
+          while(name.length < length) name += ' ';
+          if (selectors[i]) string.push( name+' : '+selectors[i] );
+        }
+
+        return string.join("\n");
+      }
+
       return tree;
-    },
+    })(),
     clone: function(value){
       var clone = new Partial(value);
       clone.partials = this.partials;
@@ -122,7 +172,7 @@
       };
 
       function findShallowest(name, selector){
-        var names = name.replace(SURROUNDING_WHITE_SPACE,'').split(/\s+/), selectors = [selector];
+        var names = strip(name).split(/\s+/), selectors = [selector];
         while(names.length) selectors = findAll (names.shift(), selectors, names.length === 0);
         return selectors[0];
       }
@@ -245,6 +295,18 @@
         selector = selector.parent;
       }
       return false;
+    },
+
+    selectors: function(){
+      var
+        selectors = [],
+        partials  = this.partial.partials,
+        name;
+
+      for (name in partials)
+        selectors.push(new Selector(this, name, this));
+
+      return selectors;
     }
   });
 
@@ -277,7 +339,7 @@
   }
 
   function strip(string){
-    return string.replace(LEADING_AND_TRAILING_WHITE_SPACE,'');
+    return string.replace(SURROUNDING_WHITE_SPACE,'');
   }
 
   function joinSelectors(parent, child, noSpace){

@@ -265,23 +265,96 @@
 
   });
 
-  test('Selector#tree', function(){
-    var map = Selector();
-    map
-      .down('a', '#a')
-        .down('b', '.b')
-          .down('c','c').end()
-        .end()
-      .end()
+  test('Selector#selectors', function(){
+
+    var
+      container = Selector('#container'),
+      selectors;
+
+    container
+      .down('thing1', '.').end()
+      .down('thing2', '.').end()
+      .down('thing3', '.').end()
+      .down('thing4', '.').end()
     ;
 
-    expect(map.tree()).toDeepEqual({
-      'a "#a"': {
-        'b ".b"': {
-          'c "c"': { }
-         }
-       }
-     });
+    selectors = container.selectors();
+    expect(selectors.length).toBe(4);
+    expect(selectors[0]).toBeTheSameSelectorAs(container.down('thing1'));
+    expect(selectors[1]).toBeTheSameSelectorAs(container.down('thing2'));
+    expect(selectors[2]).toBeTheSameSelectorAs(container.down('thing3'));
+    expect(selectors[3]).toBeTheSameSelectorAs(container.down('thing4'));
+
+    expect(selectors[0].up() ).toBeTheSameSelectorAs(container);
+    expect(selectors[0].end()).toBeTheSameSelectorAs(container);
+
+  });
+
+  test('Selector#tree', function(){
+    var
+      map = Selector()
+        .down('a', '#')
+          .down('b', '.')
+            .down('c','>.').end()
+            .down('d','.').end()
+          .end()
+          .down('e','>.').end()
+        .end(),
+      tree   = map.tree(),
+      string = tree.toString();
+
+    expect(JSON.stringify(tree)).toEqual(
+      '{\"a `#a`\":{\"b `.b`\":{\"c `> .c`\":{},\"d `.d`\":{}},\"e `> .e`\":{}}}'
+    );
+
+    expect(tree).toDeepEqual({
+      'a `#a`': {
+        'b `.b`': {
+          'c `> .c`': {},
+          'd `.d`': {}
+        },
+        'e `> .e`': {}
+      },
+      toString: tree.toString
+    });
+
+    expect(string).toEqual(
+      "a : #a\n"+
+      "b : #a .b\n"+
+      "c : #a .b > .c\n"+
+      "d : #a .b .d\n"+
+      "e : #a > .e"
+    );
+
+    map.partial.value = "body"
+    tree = map.tree();
+    string = tree.toString();
+
+    expect(JSON.stringify(tree)).toEqual(
+      '{\"`body`\":{\"a `#a`\":{\"b `.b`\":{\"c `> .c`\":{},\"d `.d`\":{}},\"e `> .e`\":{}}}}'
+    );
+
+    expect(tree).toDeepEqual({
+      '`body`': {
+        'a `#a`': {
+          'b `.b`': {
+            'c `> .c`': {},
+            'd `.d`': {}
+          },
+          'e `> .e`': {}
+        }
+      },
+      toString: tree.toString
+    });
+
+    expect(string).toEqual(
+      "  : body\n"+
+      "a : body #a\n"+
+      "b : body #a .b\n"+
+      "c : body #a .b > .c\n"+
+      "d : body #a .b .d\n"+
+      "e : body #a > .e"
+    );
 
   });
 
@@ -317,5 +390,6 @@
     expect( root.down('buttons').down('text').when(':visible').toString() ).toBe('a span:visible, input span:visible');
 
   });
+
 
 })();
